@@ -398,15 +398,25 @@ async function apiFetch(url,headers={}){
 }
 
 async function getGoldPrice(){
-  // gold-api.com — ไม่ต้อง Key ไม่มี CORS เรียกตรงได้เลย
-  const d=await apiFetch(GOLD_URL);
-  if(!d.price) throw new Error('Gold: no price data');
-  // gold-api.com returns: { price, symbol, timestamp }
-  // คำนวณ change จาก prev
-  const prev=S.gold||d.price;
-  const ch=parseFloat((d.price-prev).toFixed(2));
-  const chp=parseFloat(((ch/prev)*100).toFixed(2));
-  return {price:d.price, ch, chp};
+  // ลอง proxy หลายตัวเรียงกัน
+  const target='https://gold-api.com/price/XAU';
+  const proxies=[
+    `https://corsproxy.io/?${encodeURIComponent(target)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`,
+    `https://thingproxy.freeboard.io/fetch/${target}`,
+  ];
+  let lastErr;
+  for(const url of proxies){
+    try{
+      const d=await apiFetch(url);
+      if(!d.price) throw new Error('no price');
+      const prev=S.gold||d.price;
+      const ch=parseFloat((d.price-prev).toFixed(2));
+      const chp=parseFloat(((ch/prev)*100).toFixed(2));
+      return {price:d.price, ch, chp};
+    }catch(e){ lastErr=e; console.warn('proxy fail:',url,e.message); }
+  }
+  throw new Error(lastErr?.message||'All proxies failed');
 }
 
 async function getDXY(){
