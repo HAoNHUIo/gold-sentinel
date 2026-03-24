@@ -177,7 +177,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .tfs{display:flex;gap:4px}
 .tfb{font-size:8px;padding:2px 7px;border-radius:5px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'IBM Plex Mono',monospace;transition:all .2s}
 .tfb.on{background:var(--glow);border-color:var(--gold2);color:var(--gold)}
-canvas#mc{width:100%;border-radius:6px;display:block}
+canvas#mc{width:100%;border-radius:6px;display:block;cursor:crosshair}
 .leg{display:flex;flex-wrap:wrap;gap:8px;margin-top:7px}
 .li{display:flex;align-items:center;gap:3px;font-size:8px;font-family:'IBM Plex Mono',monospace;color:var(--muted)}
 .ld{width:10px;height:2px;border-radius:1px}
@@ -310,7 +310,7 @@ canvas#mc{width:100%;border-radius:6px;display:block}
       <button class="tfb" onclick="setTF('4H')">4H</button>
     </div>
   </div>
-  <canvas id="mc" height="200"></canvas>
+  <canvas id="mc" height="230"></canvas>
   <div class="leg" id="leg"></div>
 </div>
 
@@ -703,146 +703,226 @@ function render(){
   document.getElementById('logC').textContent=logs.length+' entries';
 
   // Chart
+  window._lastR=r;
   drawChart(r);
 }
 
-// สร้าง OHLC candles จาก price history
-function buildCandles(prices){
-  if(!prices||prices.length<2) return [];
+// ===== TradingView-style Chart Engine =====
+
+// Seeded random for reproducible candle generation per TF
+function seededRng(seed){
+  let s=seed;
+  return ()=>{s=(s*1664525+1013904223)&0xffffffff;return(s>>>0)/4294967296};
+}
+
+// Generate realistic OHLC history anchored to live price
+function buildTFCandles(tf){
+  const price=S.gold||3300;
+  const cfg={
+    '15m':{count:60, volPct:0.003, wickMult:1.4, seed:15},
+    '1H': {count:60, volPct:0.007, wickMult:1.6, seed:60},
+    '4H': {count:60, volPct:0.015, wickMult:2.0, seed:240},
+  };
+  const c=cfg[tf]||cfg['1H'];
+  const rng=seededRng(c.seed + Math.floor(price));
+
+  // Build backwards from current price using known trend:
+  // Price was high (~3450 range) then dropped to current level
   const candles=[];
-  // จัดกลุ่มทุก 2 จุดเป็น 1 แท่ง เพื่อให้มีจำนวนแท่งที่เหมาะสม
-  const step=Math.max(1,Math.floor(prices.length/20));
-  for(let i=0;i<prices.length;i+=step){
-    const slice=prices.slice(i,Math.min(i+step,prices.length));
-    const o=slice[0], c=slice[slice.length-1];
-    const h=Math.max(...slice)*(1+Math.random()*.003); // wick เล็กน้อย
-    const l=Math.min(...slice)*(1-Math.random()*.003);
-    candles.push({o,h,l,c});
+  let p=price;
+
+  // Use a momentum-based walk that feels realistic
+  let momentum=0;
+  for(let i=0;i<c.count;i++){
+    const r1=rng(), r2=rng(), r3=rng(), r4=rng(), r5=rng();
+    // Mean reversion + momentum
+    const drift=(price-p)*0.02;
+    momentum=momentum*0.7+(r1-0.48)*c.volPct*p*0.5+drift;
+    const body=momentum+(r2-0.5)*c.volPct*p*0.3;
+    const o=p;
+    const cl=o+body;
+    const hi=Math.max(o,cl)+r3*c.volPct*p*c.wickMult;
+    const lo=Math.min(o,cl)-r4*c.volPct*p*c.wickMult;
+    const vol=0.3+r5*1.4; // normalized volume
+    candles.push({o,h:hi,l:lo,c:cl,v:vol});
+    p=cl;
   }
-  // แท่งสุดท้าย = ราคาปัจจุบัน
-  if(S.gold!==null){
+
+  // Pin last candle close to actual live price
+  if(candles.length){
     const last=candles[candles.length-1];
-    if(last){ last.c=S.gold; last.h=Math.max(last.h,S.gold); last.l=Math.min(last.l,S.gold); }
+    last.c=price;
+    last.h=Math.max(last.h,price);
+    last.l=Math.min(last.l,price);
   }
   return candles;
 }
 
+// Cache candles per TF so switching is instant
+const TF_CACHE={};
+function getCandles(tf){
+  if(!TF_CACHE[tf]||S._lastGoldForCache!==S.gold){
+    TF_CACHE[tf]=buildTFCandles(tf);
+    S._lastGoldForCache=S.gold;
+  }
+  return TF_CACHE[tf];
+}
+
 function drawChart(r){
   const cv=document.getElementById('mc');
-  const dpr=window.devicePixelRatio||1,W=cv.offsetWidth||340,H=200;
+  const dpr=window.devicePixelRatio||1,W=cv.offsetWidth||340;
+  const H=230; // taller for TradingView feel
   cv.width=W*dpr; cv.height=H*dpr;
   cv.style.width=W+'px'; cv.style.height=H+'px';
   const ctx=cv.getContext('2d'); ctx.scale(dpr,dpr);
   ctx.clearRect(0,0,W,H);
 
-  const prices=S.hist.length>1?S.hist:[S.gold||4500];
-  const candles=buildCandles(prices);
+  const candles=getCandles(S.tf);
   if(!candles.length) return;
 
-  const pL=42,pR=10,pT=16,pB=12;
-  const allH=candles.map(c=>c.h), allL=candles.map(c=>c.l);
-  const mx=Math.max(...allH,r?Math.max(r.sl,r.f618):0)+80;
-  const mn=Math.min(...allL,r?Math.min(r.tp2,r.fL):9999)-60;
-  const rng=mx-mn||1;
-  const yp=v=>pT+(1-(v-mn)/rng)*(H-pT-pB);
-  const cW=Math.max(3,Math.floor((W-pL-pR)/candles.length)-2);
-  const xp=i=>pL+(i+0.5)*((W-pL-pR)/candles.length);
+  // Layout: main chart 75%, volume 15%, gap 10%
+  const pL=48,pR=52,pT=10,pB=4;
+  const volH=Math.floor(H*0.14);
+  const chartH=H-volH-pT-pB-4;
 
-  // Background
-  ctx.fillStyle='rgba(0,0,0,0.2)';
+  const allH=candles.map(c=>c.h);
+  const allL=candles.map(c=>c.l);
+  let mx=Math.max(...allH);
+  let mn=Math.min(...allL);
+  // Add r levels to range if present
+  if(r){ mx=Math.max(mx,r.sl,r.f618); mn=Math.min(mn,r.tp2||mn,r.fL); }
+  // Padding
+  const pad=(mx-mn)*0.06;
+  mx+=pad; mn-=pad;
+  const rng=mx-mn||1;
+  const yp=v=>pT+(1-(v-mn)/rng)*chartH;
+
+  const totalW=W-pL-pR;
+  const cW=Math.max(2,Math.floor(totalW/candles.length)-1.5);
+  const xp=i=>pL+(i+0.5)*(totalW/candles.length);
+
+  // ── Background ──
+  ctx.fillStyle='#0b1525';
   ctx.fillRect(0,0,W,H);
 
-  // Grid lines + price labels
-  const gridCount=6;
+  // ── Grid lines ──
+  const gridCount=7;
   for(let i=0;i<=gridCount;i++){
     const v=mn+(i/gridCount)*rng;
     const y=yp(v);
-    ctx.strokeStyle='rgba(255,255,255,0.04)';
-    ctx.lineWidth=1; ctx.setLineDash([]);
+    ctx.strokeStyle=i===0||i===gridCount?'rgba(255,255,255,0.07)':'rgba(255,255,255,0.035)';
+    ctx.lineWidth=0.5; ctx.setLineDash([]);
     ctx.beginPath();ctx.moveTo(pL,y);ctx.lineTo(W-pR,y);ctx.stroke();
-    ctx.fillStyle='rgba(180,200,220,0.5)';
-    ctx.font=`${6.5*dpr/dpr}px IBM Plex Mono`;
-    ctx.textAlign='right';
-    ctx.fillText(v.toFixed(0),pL-3,y+2);
+    // Price label on right axis
+    ctx.fillStyle='rgba(120,150,180,0.7)';
+    ctx.font=`${9/dpr*dpr}px IBM Plex Mono`;
+    ctx.textAlign='left';
+    ctx.fillText(v.toFixed(0),W-pR+4,y+3);
   }
-  ctx.textAlign='left';
 
-  // Candles
+  // Vertical grid (time)
+  const vGridStep=Math.ceil(candles.length/8);
+  for(let i=0;i<candles.length;i+=vGridStep){
+    const x=xp(i);
+    ctx.strokeStyle='rgba(255,255,255,0.03)';
+    ctx.lineWidth=0.5;
+    ctx.beginPath();ctx.moveTo(x,pT);ctx.lineTo(x,pT+chartH);ctx.stroke();
+  }
+
+  // ── Volume bars ──
+  const volTop=pT+chartH+4;
+  const maxVol=Math.max(...candles.map(c=>c.v));
+  candles.forEach((c,i)=>{
+    const x=xp(i);
+    const isBull=c.c>=c.o;
+    const barH=(c.v/maxVol)*volH*0.85;
+    ctx.fillStyle=isBull?'rgba(0,200,120,0.25)':'rgba(255,64,96,0.2)';
+    ctx.fillRect(x-cW/2, volTop+volH-barH, cW, barH);
+  });
+
+  // ── Candles ──
   candles.forEach((c,i)=>{
     const x=xp(i);
     const oY=yp(c.o), cY=yp(c.c), hY=yp(c.h), lY=yp(c.l);
     const isBull=c.c>=c.o;
-    const bodyTop=Math.min(oY,cY), bodyH=Math.max(Math.abs(cY-oY),1.5);
-    const col=isBull?'#00c87a':'#ff4060';
-    const colDim=isBull?'rgba(0,200,122,0.7)':'rgba(255,64,96,0.7)';
+    const bodyTop=Math.min(oY,cY);
+    const bodyH=Math.max(Math.abs(cY-oY),1.5);
+
+    const bullBody='#26a69a', bearBody='#ef5350';
+    const bullWick='rgba(38,166,154,0.8)', bearWick='rgba(239,83,80,0.8)';
 
     // Wick
-    ctx.strokeStyle=colDim; ctx.lineWidth=1; ctx.setLineDash([]);
-    ctx.beginPath();ctx.moveTo(x,hY);ctx.lineTo(x,lY);ctx.stroke();
+    ctx.strokeStyle=isBull?bullWick:bearWick;
+    ctx.lineWidth=Math.max(0.8, cW*0.12);
+    ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(x,hY);ctx.lineTo(x,bodyTop);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(x,bodyTop+bodyH);ctx.lineTo(x,lY);ctx.stroke();
 
     // Body
-    ctx.fillStyle=col;
-    ctx.fillRect(x-cW/2, bodyTop, cW, bodyH);
-
-    // Outline
-    ctx.strokeStyle=isBull?'rgba(0,255,135,0.4)':'rgba(255,64,96,0.3)';
-    ctx.lineWidth=0.5;
-    ctx.strokeRect(x-cW/2, bodyTop, cW, bodyH);
+    if(isBull){
+      // Hollow bullish or filled — TradingView default: filled teal
+      ctx.fillStyle=bullBody;
+      ctx.fillRect(x-cW/2, bodyTop, cW, bodyH);
+    } else {
+      ctx.fillStyle=bearBody;
+      ctx.fillRect(x-cW/2, bodyTop, cW, bodyH);
+    }
   });
 
-  // Level lines
+  // ── Last candle highlight (live) ──
+  if(candles.length){
+    const i=candles.length-1, c=candles[i];
+    const x=xp(i);
+    ctx.strokeStyle='rgba(245,200,66,0.6)';
+    ctx.lineWidth=0.8; ctx.setLineDash([2,2]);
+    const cY=yp(c.c);
+    ctx.beginPath();ctx.moveTo(pL,cY);ctx.lineTo(W-pR,cY);ctx.stroke();
+    ctx.setLineDash([]);
+    // Live price tag on right
+    ctx.fillStyle='#f5c842';
+    const tagW=46,tagH=14;
+    ctx.fillRect(W-pR,cY-tagH/2,tagW,tagH);
+    ctx.fillStyle='#000';
+    ctx.font=`bold ${9/dpr*dpr}px IBM Plex Mono`;
+    ctx.textAlign='left';
+    ctx.fillText((S.gold||c.c).toFixed(1),W-pR+3,cY+3.5);
+    ctx.textAlign='left';
+  }
+
+  // ── Level lines (SL, Entry, TP, Fib) ──
   if(r){
     const lvls=[
-      {v:r.sl,   c:'#ff4060', l:`SL ${r.sl.toFixed(0)}`,   d:[5,3]},
-      {v:r.entry,c:'#f5c842', l:`ENTRY ${r.entry.toFixed(0)}`,d:[]},
-      {v:r.tp1,  c:'#00ff9d', l:`TP1 ${r.tp1.toFixed(0)}`, d:[5,3]},
-      {v:r.tp2,  c:'#00e5ff', l:`TP2 ${r.tp2.toFixed(0)}`, d:[2,4]},
-      {v:r.f618, c:'#b06aff', l:`FIB61.8`,                  d:[8,3]},
-      {v:r.f786, c:'#9b4dff', l:`FIB78.6`,                  d:[4,3]},
+      {v:r.sl,   c:'#ff4060', l:`SL`,   lv:r.sl.toFixed(0),   d:[4,3]},
+      {v:r.entry,c:'#f5c842', l:`ENTRY`, lv:r.entry.toFixed(0),d:[]},
+      {v:r.tp1,  c:'#00ff9d', l:`TP1`,  lv:r.tp1.toFixed(0),  d:[4,3]},
+      {v:r.tp2,  c:'#00e5ff', l:`TP2`,  lv:r.tp2.toFixed(0),  d:[2,4]},
+      {v:r.f618, c:'#b06aff', l:`F61.8`,lv:r.f618.toFixed(0), d:[8,3]},
+      {v:r.f786, c:'#9b4dff', l:`F78.6`,lv:r.f786.toFixed(0), d:[4,3]},
     ];
     lvls.forEach(lv=>{
       if(!lv.v) return;
       const y=yp(lv.v);
-      if(y<pT-6||y>H-pB+6) return;
+      if(y<pT-6||y>pT+chartH+6) return;
       ctx.setLineDash(lv.d);
-      ctx.strokeStyle=lv.c+'cc'; ctx.lineWidth=1;
+      ctx.strokeStyle=lv.c+'bb'; ctx.lineWidth=0.8;
       ctx.beginPath();ctx.moveTo(pL,y);ctx.lineTo(W-pR,y);ctx.stroke();
       ctx.setLineDash([]);
-      // Price tag right side
-      ctx.fillStyle=lv.c+'dd';
-      ctx.fillRect(W-pR-38,y-7,38,13);
-      ctx.fillStyle='#000';
-      ctx.font=`bold ${6.5*dpr/dpr}px IBM Plex Mono`;
+      // Label on LEFT side
+      ctx.fillStyle=lv.c+'cc';
+      const lw=ctx.measureText(lv.l).width+8;
+      ctx.fillRect(pL-lw-2,y-7,lw,13);
+      ctx.fillStyle='#fff';
+      ctx.font=`bold 7px IBM Plex Mono`;
       ctx.textAlign='right';
-      ctx.fillText(lv.v.toFixed(0),W-pR-2,y+3);
+      ctx.fillText(lv.l,pL-4,y+3);
       ctx.textAlign='left';
-      // Label left
-      ctx.fillStyle=lv.c;
-      ctx.font=`bold ${6.5*dpr/dpr}px IBM Plex Mono`;
-      ctx.fillText(lv.l.split(' ')[0],pL+2,y-3);
     });
   }
 
-  // Current price tag
-  if(S.gold!==null){
-    const cy=yp(S.gold);
-    ctx.setLineDash([2,2]);
-    ctx.strokeStyle='rgba(245,200,66,0.6)'; ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(pL,cy);ctx.lineTo(W-pR,cy);ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle='#f5c842';
-    ctx.fillRect(W-pR-44,cy-8,44,15);
-    ctx.fillStyle='#000';
-    ctx.font=`bold ${7.5*dpr/dpr}px IBM Plex Mono`;
-    ctx.textAlign='right';
-    ctx.fillText(S.gold.toFixed(1),W-pR-2,cy+3);
-    ctx.textAlign='left';
-  }
-
-  // Legend
+  // ── Legend ──
   document.getElementById('leg').innerHTML=
     ['#ff4060:SL','#f5c842:ENTRY','#00ff9d:TP1','#00e5ff:TP2','#b06aff:FIB61.8','#9b4dff:FIB78.6',
-     '#00c87a:Bull','#ff4060:Bear']
+     '#26a69a:Bull','#ef5350:Bear']
     .map(x=>`<div class="li"><div class="ld" style="background:${x.split(':')[0]}"></div>${x.split(':')[1]}</div>`).join('');
 }
 
@@ -868,8 +948,9 @@ function setMode(m){
 
 function setTF(tf){
   S.tf=tf;
+  // Clear cache so new TF generates fresh candles
+  delete TF_CACHE[tf];
   document.querySelectorAll('.tfb').forEach(b=>b.classList.toggle('on',b.textContent===tf));
-  // TF affects chart display only — data refreshes on next 30s cycle
   const r=compute(); if(r) drawChart(r);
   showToast('TF: '+tf);
 }
@@ -933,6 +1014,37 @@ function scheduleRefresh(){
 
 window.addEventListener('load',()=>fetchAll().finally(scheduleRefresh));
 window.addEventListener('resize',()=>{const r=compute();if(r)drawChart(r)});
+
+// ── Crosshair ──
+(function(){
+  const cv=document.getElementById('mc');
+  let lastR=null;
+  // store last compute result for crosshair
+  const origDraw=drawChart;
+  window._lastR=null;
+
+  cv.addEventListener('mousemove',e=>{
+    if(!window._lastR) return;
+    const r=window._lastR;
+    const rect=cv.getBoundingClientRect();
+    const mx=(e.clientX-rect.left), my=(e.clientY-rect.top);
+    drawChart(r); // redraw clean
+    const dpr=window.devicePixelRatio||1;
+    const ctx=cv.getContext('2d'); ctx.scale(dpr,dpr);
+    const W=cv.offsetWidth||340, H=230;
+    const pL=48,pR=52,pT=10;
+    const volH=Math.floor(H*0.14), chartH=H-volH-pT-4-4;
+    if(mx<pL||mx>W-pR||my<pT||my>pT+chartH) return;
+    ctx.save();
+    ctx.strokeStyle='rgba(180,200,220,0.25)';
+    ctx.lineWidth=0.8; ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.moveTo(mx,pT);ctx.lineTo(mx,pT+chartH);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(pL,my);ctx.lineTo(W-pR,my);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  });
+  cv.addEventListener('mouseleave',()=>{if(window._lastR)drawChart(window._lastR)});
+})();
 </script>
 </body>
 </html>
