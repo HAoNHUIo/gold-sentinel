@@ -230,7 +230,7 @@ canvas#mc{width:100%;border-radius:6px;display:block;cursor:crosshair}
 <div class="sbar2">
   <div style="display:flex;align-items:center;gap:6px">
     <div class="sd ld" id="sDot"></div>
-    <span style="color:var(--muted)">Gold: GoldAPI · DXY: ECB</span>
+    <span style="color:var(--muted)">Gold+DXY: GoldAPI</span>
     <span style="color:var(--cyan)" id="sVal">Connecting...</span>
   </div>
   <span style="color:var(--muted);font-size:8px" id="sRight">--</span>
@@ -444,13 +444,14 @@ async function apiFetch(url,headers={}){
 }
 
 async function getGoldPrice(){
-  // เรียก Cloudflare Worker โดยตรง — ไม่มี CORS ไม่มี quota
+  // เรียก Cloudflare Worker — ได้ทั้ง gold + dxy real-time
   const d=await apiFetch(GOLD_URL);
   if(!d.price) throw new Error('Gold: no price data');
   const prev=S.gold||d.price;
   const ch=parseFloat((d.price-prev).toFixed(2));
   const chp=parseFloat(((ch/prev)*100).toFixed(2));
-  return {price:d.price, ch, chp};
+  // Worker ส่ง dxy กลับมาด้วย (ถ้า Worker เวอร์ชันใหม่)
+  return {price:d.price, ch, chp, dxy: d.dxy||null};
 }
 
 async function getDXY(){
@@ -503,13 +504,23 @@ async function fetchAll(){
     return;
   }
 
-  // ดึง DXY แยก — ถ้าล้มเหลวใช้ค่าเดิม ไม่หยุดทั้งระบบ
+  // ดึง DXY — ถ้า Worker ใหม่ส่ง dxy.value มาแล้ว ใช้เลย (real-time)
   let dxyPrice=S.dxy||99.5;
-  try{
-    dxyPrice=await getDXY();
-  }catch(e){
-    console.warn('DXY fetch failed, using last value:',e.message);
-    showToast('⚠️ DXY ใช้ค่าเดิม: '+dxyPrice.toFixed(3));
+  if(S.dxyManual!==null){
+    dxyPrice=S.dxyManual;
+  } else if(goldData.dxy?.value){
+    // ✅ Worker ใหม่: dxy real-time จาก EURUSD gold-api
+    dxyPrice=goldData.dxy.value;
+    const src=goldData.dxy.source||'worker';
+    setStat('ok',`Gold ${goldData.price.toFixed(2)} · DXY ${dxyPrice.toFixed(3)} (${src})`);
+  } else {
+    // Fallback: Frankfurter
+    try{
+      dxyPrice=await getDXY();
+    }catch(e){
+      console.warn('DXY fetch failed, using last value:',e.message);
+      showToast('⚠️ DXY ใช้ค่าเดิม: '+dxyPrice.toFixed(3));
+    }
   }
 
   // อัพเดท State
@@ -530,7 +541,8 @@ async function fetchAll(){
 function setStat(st,msg){
   document.getElementById('sDot').className='sd '+(st==='ok'?'ok':st==='ld'?'ld':'er');
   document.getElementById('sVal').textContent=msg;
-  document.getElementById('sRight').textContent=st==='ok'?`Fetch #${S.fetchN}`:'--';
+  document.getElementById('sRight').textContent=st==='ok'
+    ?(S.dxyManual!==null?`Fetch #${S.fetchN} · DXY✎`:`Fetch #${S.fetchN}`):'--';
 }
 function setPill(cls,txt){
   const p=document.getElementById('pill');
