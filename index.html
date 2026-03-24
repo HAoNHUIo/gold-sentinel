@@ -46,6 +46,13 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .sd{width:6px;height:6px;border-radius:50%;transition:background .3s}
 .sd.ok{background:var(--green)}.sd.ld{background:var(--orange);animation:blink .5s infinite}.sd.er{background:var(--red)}.sd.sm{background:var(--orange)}
 
+.dxy-row{display:flex;align-items:center;gap:6px;padding:5px 10px;background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.15);border-radius:8px;margin-bottom:9px;font-family:'IBM Plex Mono',monospace;font-size:9px}
+.dxy-row label{color:var(--muted);white-space:nowrap}
+.dxy-inp{background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.25);border-radius:5px;color:var(--cyan);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 7px;width:72px;outline:none;text-align:right}
+.dxy-inp:focus{border-color:var(--cyan)}
+.dxy-btn{padding:3px 9px;border-radius:5px;border:1px solid rgba(0,229,255,0.3);background:rgba(0,229,255,0.1);color:var(--cyan);font-family:'IBM Plex Mono',monospace;font-size:9px;cursor:pointer;white-space:nowrap}
+.dxy-btn:active{background:rgba(0,229,255,0.2)}
+.dxy-auto{color:var(--muted);font-size:8px;cursor:pointer;text-decoration:underline;white-space:nowrap}
 .notice{display:flex;align-items:flex-start;gap:8px;padding:8px 12px;
   background:rgba(255,140,0,0.06);border:1px solid rgba(255,140,0,0.25);border-radius:10px;
   margin-bottom:9px;font-size:9px;line-height:1.6}
@@ -173,7 +180,12 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .fiv.ok{color:var(--green)}.fiv.warn{color:var(--orange)}.fiv.bad{color:var(--red)}.fiv.info{color:var(--cyan)}
 .fin{font-size:8px;color:var(--muted);margin-top:2px}
 
-.ch-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.ch-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:5px}
+.tv-card{padding:10px}
+.tv-wrap{border-radius:8px;overflow:hidden;margin-bottom:0}
+.tv-tabs{display:flex;gap:4px}
+.tv-tab{font-size:8px;padding:3px 8px;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'IBM Plex Mono',monospace;transition:all .2s;white-space:nowrap}
+.tv-tab.active{background:rgba(245,200,66,0.15);border-color:var(--gold2);color:var(--gold)}
 .tfs{display:flex;gap:4px}
 .tfb{font-size:8px;padding:2px 7px;border-radius:5px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'IBM Plex Mono',monospace;transition:all .2s}
 .tfb.on{background:var(--glow);border-color:var(--gold2);color:var(--gold)}
@@ -218,12 +230,19 @@ canvas#mc{width:100%;border-radius:6px;display:block;cursor:crosshair}
 <div class="sbar2">
   <div style="display:flex;align-items:center;gap:6px">
     <div class="sd ld" id="sDot"></div>
-    <span style="color:var(--muted)">GoldAPI.io</span>
+    <span style="color:var(--muted)">Gold: GoldAPI · DXY: ECB</span>
     <span style="color:var(--cyan)" id="sVal">Connecting...</span>
   </div>
   <span style="color:var(--muted);font-size:8px" id="sRight">--</span>
 </div>
 
+<div class="dxy-row">
+  <label>DXY MANUAL:</label>
+  <input class="dxy-inp" id="dxyInp" type="number" step="0.001" placeholder="99.376" oninput="onDXYInput()">
+  <button class="dxy-btn" onclick="applyDXY()">SET</button>
+  <span class="dxy-auto" onclick="clearDXY()" id="dxyAuto">AUTO</span>
+  <span id="dxyStatus" style="color:var(--muted);font-size:8px;margin-left:auto">ใช้ค่าอัตโนมัติ</span>
+</div>
 <div class="notice hide" id="notice">
   <span style="flex-shrink:0;font-size:14px">⚠️</span>
   <div class="ntext">
@@ -301,17 +320,43 @@ canvas#mc{width:100%;border-radius:6px;display:block;cursor:crosshair}
   <div class="lc2" id="tf"><div class="fb" id="fBox"></div></div>
 </div>
 
-<div class="card">
+<div class="card tv-card">
   <div class="ch-h">
-    <div class="ct" style="margin:0">PRICE ACTION <span id="cSrc">--</span></div>
-    <div class="tfs">
-      <button class="tfb" onclick="setTF('15m')">15m</button>
-      <button class="tfb on" onclick="setTF('1H')">1H</button>
-      <button class="tfb" onclick="setTF('4H')">4H</button>
+    <div class="ct" style="margin:0">PRICE ACTION <span id="cSrc">LIVE</span></div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <div class="tv-tabs">
+        <button class="tv-tab active" onclick="switchTVChart('gold',this)">🥇 XAU/USD</button>
+        <button class="tv-tab" onclick="switchTVChart('dxy',this)">💵 DXY</button>
+        <button class="tv-tab" onclick="switchTVChart('custom',this)">📊 Custom</button>
+      </div>
+      <div class="tfs">
+        <button class="tfb" onclick="setTVInterval('15',this)">15m</button>
+        <button class="tfb" onclick="setTVInterval('60',this)">1H</button>
+        <button class="tfb on" onclick="setTVInterval('240',this)">4H</button>
+        <button class="tfb" onclick="setTVInterval('D',this)">1D</button>
+      </div>
     </div>
   </div>
-  <canvas id="mc" height="230"></canvas>
-  <div class="leg" id="leg"></div>
+
+  <!-- TradingView Gold Chart -->
+  <div id="tv-gold" class="tv-wrap">
+    <div id="tv-gold-widget"></div>
+  </div>
+
+  <!-- TradingView DXY Chart -->
+  <div id="tv-dxy" class="tv-wrap" style="display:none">
+    <div id="tv-dxy-widget"></div>
+  </div>
+
+  <!-- Custom canvas chart -->
+  <div id="tv-custom" class="tv-wrap" style="display:none">
+    <canvas id="mc" height="230"></canvas>
+    <div class="leg" id="leg"></div>
+  </div>
+
+  <div style="font-size:7px;color:var(--muted);text-align:right;margin-top:4px;font-family:'IBM Plex Mono',monospace">
+    Powered by <span style="color:var(--cyan)">TradingView</span>
+  </div>
 </div>
 
 <div class="card">
@@ -372,6 +417,7 @@ const S={
   isLive:false,fetchN:0,lastFetch:null,
   alarmOn:false,audioCtx:null,
   refreshT:null,
+  dxyManual:null,
 };
 
 setInterval(()=>{
@@ -408,12 +454,13 @@ async function getGoldPrice(){
 }
 
 async function getDXY(){
-  // Frankfurter = ECB rates ฟรี ไม่มี CORS — ล่าช้า 1 วัน แต่ใช้วัด trend ได้
+  // ถ้า user override DXY ด้วยตนเอง ให้ใช้ค่านั้นเลย
+  if(S.dxyManual!==null) return S.dxyManual;
   const d=await apiFetch(FX_URL);
   if(!d.rates) throw new Error('DXY: no rates');
   const {EUR,JPY,GBP,CAD,SEK,CHF}=d.rates;
   const EURUSD=1/EUR,USDJPY=JPY,GBPUSD=1/GBP,USDCAD=CAD,USDSEK=SEK,USDCHF=CHF;
-  // ICE DXY formula
+  // ICE DXY formula (weights: EUR 57.6%, JPY 13.6%, GBP 11.9%, CAD 9.1%, SEK 4.2%, CHF 3.6%)
   const raw=50.14348112
     *Math.pow(EURUSD,-0.576)
     *Math.pow(USDJPY, 0.136)
@@ -421,8 +468,8 @@ async function getDXY(){
     *Math.pow(USDCAD, 0.091)
     *Math.pow(USDSEK, 0.042)
     *Math.pow(USDCHF, 0.036);
-  // ECB rates ~1 day delay vs spot → calibration offset -4.2 (empirical)
-  return parseFloat((raw-4.2).toFixed(3));
+  // ไม่ใช้ empirical offset คงที่ — ใช้ raw ตรงๆ แม่นกว่า
+  return parseFloat(raw.toFixed(3));
 }
 
 // Baseline history จากกราฟที่เห็น — ใช้เป็น seed ก่อนที่ real-time จะสะสมพอ
@@ -577,7 +624,7 @@ function render(){
   ge.className='pc2 '+(gC>=0?'up':'dn');
   document.getElementById('gT').textContent='🟢 '+now;
   const dC=S.dxyPrev?S.dxy-S.dxyPrev:0, dP=S.dxyPrev?dC/S.dxyPrev*100:0;
-  document.getElementById('dP').textContent=S.dxy.toFixed(3);
+  document.getElementById('dP').textContent=S.dxy.toFixed(3)+(S.dxyManual!==null?' ✎':'');
   const de=document.getElementById('dC');
   de.textContent=`${dC>=0?'▲':'▼'} ${Math.abs(dC).toFixed(3)} (${Math.abs(dP).toFixed(2)}%)`;
   de.className='pc2 '+(dC>=0?'up':'dn');
@@ -1007,13 +1054,133 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),2500);
 }
 
+function onDXYInput(){
+  const v=parseFloat(document.getElementById('dxyInp').value);
+  if(!isNaN(v)&&v>50&&v<200){
+    document.getElementById('dxyStatus').textContent='กด SET เพื่อบันทึก';
+    document.getElementById('dxyStatus').style.color='var(--gold)';
+  }
+}
+
+function applyDXY(){
+  const v=parseFloat(document.getElementById('dxyInp').value);
+  if(isNaN(v)||v<50||v>200){showToast('⚠️ DXY ไม่ถูกต้อง (50-200)');return;}
+  S.dxyManual=parseFloat(v.toFixed(3));
+  S.dxy=S.dxyManual;
+  document.getElementById('dxyStatus').textContent='Manual: '+S.dxyManual.toFixed(3);
+  document.getElementById('dxyStatus').style.color='var(--cyan)';
+  document.getElementById('dxyAuto').style.color='var(--orange)';
+  render();
+  showToast('✓ DXY = '+S.dxyManual.toFixed(3));
+}
+
+function clearDXY(){
+  S.dxyManual=null;
+  document.getElementById('dxyInp').value='';
+  document.getElementById('dxyStatus').textContent='ใช้ค่าอัตโนมัติ';
+  document.getElementById('dxyStatus').style.color='var(--muted)';
+  document.getElementById('dxyAuto').style.color='var(--muted)';
+  showToast('DXY: Auto mode');
+  fetchAll().finally(scheduleRefresh);
+}
+
+
+// ===== TradingView Widget =====
+let TV_INTERVAL = '240'; // default 4H
+
+function createTVWidget(containerId, symbol, interval){
+  const container = document.getElementById(containerId);
+  if(!container) return;
+  container.innerHTML = '';
+  const script = document.createElement('script');
+  script.src = 'https://s3.tradingview.com/tv.js';
+  script.async = true;
+  script.onload = () => {
+    new TradingView.widget({
+      container_id: containerId,
+      symbol: symbol,
+      interval: interval,
+      timezone: 'Asia/Bangkok',
+      theme: 'dark',
+      style: '1',
+      locale: 'th',
+      toolbar_bg: '#0b1525',
+      enable_publishing: false,
+      hide_top_toolbar: false,
+      hide_legend: false,
+      save_image: false,
+      height: 340,
+      width: '100%',
+      studies: ['Volume@tv-basicstudies'],
+      backgroundColor: '#070d18',
+      gridColor: 'rgba(0,229,255,0.04)',
+      hide_side_toolbar: true,
+      allow_symbol_change: true,
+      withdateranges: false,
+      details: false,
+      hotlist: false,
+      calendar: false,
+    });
+  };
+  // ถ้า TradingView โหลดแล้ว ไม่ต้องโหลด script ซ้ำ
+  if(window.TradingView){
+    script.onload();
+  } else {
+    document.head.appendChild(script);
+  }
+}
+
+let currentTVChart = 'gold';
+
+function switchTVChart(chart, btn){
+  currentTVChart = chart;
+  // Switch tab active
+  document.querySelectorAll('.tv-tab').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  // Show/hide panels
+  document.getElementById('tv-gold').style.display = chart==='gold' ? '' : 'none';
+  document.getElementById('tv-dxy').style.display  = chart==='dxy'  ? '' : 'none';
+  document.getElementById('tv-custom').style.display = chart==='custom' ? '' : 'none';
+
+  if(chart==='gold'){
+    initTVGold(TV_INTERVAL);
+  } else if(chart==='dxy'){
+    initTVDXY(TV_INTERVAL);
+  }
+}
+
+function initTVGold(interval){
+  createTVWidget('tv-gold-widget', 'OANDA:XAUUSD', interval);
+}
+
+function initTVDXY(interval){
+  createTVWidget('tv-dxy-widget', 'TVC:DXY', interval);
+}
+
+function setTVInterval(interval, btn){
+  TV_INTERVAL = interval;
+  document.querySelectorAll('.tfb').forEach(b => b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  // Recreate active chart with new interval
+  if(currentTVChart==='gold') initTVGold(interval);
+  else if(currentTVChart==='dxy') initTVDXY(interval);
+  // Also update internal TF for compute()
+  const tfMap = {'15':'15m','60':'1H','240':'4H','D':'1D'};
+  S.tf = tfMap[interval]||'4H';
+  const r=compute(); if(r && currentTVChart==='custom') drawChart(r);
+}
+
 function scheduleRefresh(){
   clearTimeout(S.refreshT);
   S.refreshT=setTimeout(()=>fetchAll().finally(scheduleRefresh),30000);
 }
 
-window.addEventListener('load',()=>fetchAll().finally(scheduleRefresh));
-window.addEventListener('resize',()=>{const r=compute();if(r)drawChart(r)});
+window.addEventListener('load',()=>{
+  fetchAll().finally(scheduleRefresh);
+  // Init TradingView Gold chart by default
+  initTVGold(TV_INTERVAL);
+});
+window.addEventListener('resize',()=>{if(currentTVChart==='custom'){const r=compute();if(r)drawChart(r);}});
 
 // ── Crosshair ──
 (function(){
