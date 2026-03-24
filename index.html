@@ -207,7 +207,7 @@ canvas#mc{width:100%;border-radius:6px;display:block}
 <div class="tb">
   <div style="display:flex;align-items:center;gap:9px">
     <div class="bo">⚡</div>
-    <div><div class="bn">SENTINEL <s>v8.4</s></div><div class="bv">LIVE · GOLD-API.COM + FRANKFURTER DXY</div></div>
+    <div><div class="bn">SENTINEL <s>v8.4</s></div><div class="bv">LIVE · CLOUDFLARE WORKER + FRANKFURTER DXY</div></div>
   </div>
   <div style="text-align:right">
     <div class="pill err" id="pill"><div class="dot"></div><span id="pTxt">CONNECTING</span></div>
@@ -353,8 +353,8 @@ canvas#mc{width:100%;border-radius:6px;display:block}
 <div class="toast" id="toast"></div>
 
 <script>
-// gold-api.com — ฟรี ไม่ต้อง Key ไม่มี CORS ปัญหา
-const GOLD_URL='https://gold-api.com/price/XAU';
+// Cloudflare Worker proxy — ไม่มี CORS ไม่มี quota
+const GOLD_URL='https://gold-proxy.worrawut-won.workers.dev/';
 // DXY via Frankfurter (ECB rates) — ฟรี ไม่ต้อง Key ไม่มี CORS
 const FX_URL='https://api.frankfurter.app/latest?from=USD&to=EUR,JPY,GBP,CAD,SEK,CHF';
 
@@ -398,25 +398,13 @@ async function apiFetch(url,headers={}){
 }
 
 async function getGoldPrice(){
-  // ลอง proxy หลายตัวเรียงกัน
-  const target='https://gold-api.com/price/XAU';
-  const proxies=[
-    `https://corsproxy.io/?${encodeURIComponent(target)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`,
-    `https://thingproxy.freeboard.io/fetch/${target}`,
-  ];
-  let lastErr;
-  for(const url of proxies){
-    try{
-      const d=await apiFetch(url);
-      if(!d.price) throw new Error('no price');
-      const prev=S.gold||d.price;
-      const ch=parseFloat((d.price-prev).toFixed(2));
-      const chp=parseFloat(((ch/prev)*100).toFixed(2));
-      return {price:d.price, ch, chp};
-    }catch(e){ lastErr=e; console.warn('proxy fail:',url,e.message); }
-  }
-  throw new Error(lastErr?.message||'All proxies failed');
+  // เรียก Cloudflare Worker โดยตรง — ไม่มี CORS ไม่มี quota
+  const d=await apiFetch(GOLD_URL);
+  if(!d.price) throw new Error('Gold: no price data');
+  const prev=S.gold||d.price;
+  const ch=parseFloat((d.price-prev).toFixed(2));
+  const chp=parseFloat(((ch/prev)*100).toFixed(2));
+  return {price:d.price, ch, chp};
 }
 
 async function getDXY(){
