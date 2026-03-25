@@ -207,6 +207,81 @@ canvas#mc{width:100%;border-radius:6px;display:block;cursor:crosshair}
 .abtn.armed{border-color:rgba(255,64,96,.45);background:rgba(255,64,96,.1);color:var(--red)}
 .rbtn{padding:11px 16px;border-radius:11px;cursor:pointer;background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--muted);font-size:18px;transition:all .2s}
 .rbtn:active{border-color:var(--cyan);color:var(--cyan)}
+/* ── SMC AI Panel ── */
+.smc-card{border-color:rgba(176,106,255,0.3);background:linear-gradient(135deg,rgba(176,106,255,0.04),rgba(0,229,255,0.02))}
+.smc-tabs{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+.smc-tab{font-size:8px;padding:3px 8px;border-radius:6px;cursor:pointer;border:1px solid var(--border);
+  background:transparent;color:var(--muted);font-family:'IBM Plex Mono',monospace;transition:all .2s}
+.smc-tab.on{background:rgba(176,106,255,0.15);border-color:rgba(176,106,255,0.4);color:var(--purple)}
+.smc-pane{display:none}.smc-pane.show{display:block}
+.sw-row{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border-radius:7px;
+  margin-bottom:4px;border:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.02);font-family:'IBM Plex Mono',monospace;font-size:9px}
+.sw-row:last-child{margin-bottom:0}
+.sw-lbl{font-size:8px;color:var(--muted);min-width:44px}
+.sw-badge{font-size:8px;padding:2px 7px;border-radius:10px;font-weight:700}
+.hh{background:rgba(0,255,157,0.12);color:var(--green);border:1px solid rgba(0,255,157,0.25)}
+.lh{background:rgba(255,140,0,0.12);color:var(--orange);border:1px solid rgba(255,140,0,0.25)}
+.hl{background:rgba(0,229,255,0.12);color:var(--cyan);border:1px solid rgba(0,229,255,0.25)}
+.ll{background:rgba(255,64,96,0.12);color:var(--red);border:1px solid rgba(255,64,96,0.25)}
+.tf-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px}
+.tf-box{padding:9px 10px;border-radius:9px;border:1px solid var(--border);background:rgba(255,255,255,0.02)}
+.tf-lbl{font-size:7px;letter-spacing:2px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:4px}
+.tf-val{font-size:11px;font-weight:700;font-family:'Orbitron',sans-serif}
+.tf-sub{font-size:8px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:2px}
+.tf-box.bull{border-color:rgba(0,255,157,0.25)}.tf-box.bull .tf-val{color:var(--green)}
+.tf-box.bear{border-color:rgba(255,64,96,0.25)}.tf-box.bear .tf-val{color:var(--red)}
+.tf-box.side{border-color:rgba(245,200,66,0.25)}.tf-box.side .tf-val{color:var(--gold)}
+.choch-row{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:7px;
+  background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);margin-bottom:5px;font-size:9px}
+.choch-ico{font-size:14px;flex-shrink:0}
+.choch-info{flex:1}
+.choch-name{font-size:9px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.choch-desc{font-size:8px;color:var(--muted);margin-top:1px}
+.choch-val{font-size:9px;font-family:'IBM Plex Mono',monospace;color:var(--muted);text-align:right;white-space:nowrap}
+.choch-row.true-up{border-color:rgba(0,255,157,0.25);background:rgba(0,255,157,0.04)}.choch-row.true-up .choch-name{color:var(--green)}
+.choch-row.true-dn{border-color:rgba(255,64,96,0.25);background:rgba(255,64,96,0.03)}.choch-row.true-dn .choch-name{color:var(--red)}
+.liq-row{display:flex;align-items:center;justify-content:space-between;padding:6px 9px;
+  border-radius:7px;margin-bottom:4px;border:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.02)}
+.liq-row.sweep-buy{border-color:rgba(0,255,157,0.3);background:rgba(0,255,157,0.04)}
+.liq-row.sweep-sell{border-color:rgba(255,64,96,0.3);background:rgba(255,64,96,0.04)}
+.liq-lbl{font-size:8px;font-family:'IBM Plex Mono',monospace;color:var(--muted)}
+.liq-val{font-size:10px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.fib-row{display:flex;align-items:center;justify-content:space-between;padding:5px 9px;
+  border-radius:6px;margin-bottom:3px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.015);
+  font-family:'IBM Plex Mono',monospace;font-size:9px}
+.fib-row.golden{border-color:rgba(245,200,66,0.3);background:rgba(245,200,66,0.06)}
+.fib-row.active-price{border-color:rgba(0,229,255,0.35);background:rgba(0,229,255,0.08)}
+.fib-lbl{font-size:8px;color:var(--muted)}
+.fib-val{font-weight:700}
+.fib-row.golden .fib-lbl,.fib-row.golden .fib-val{color:var(--gold)}
+.fib-row.active-price .fib-lbl,.fib-row.active-price .fib-val{color:var(--cyan)}
+/* ── Alert Records ── */
+.rec-card{border-color:rgba(0,229,255,0.2)}
+.rec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.rec-count{font-size:8px;font-family:'IBM Plex Mono',monospace;color:var(--muted);padding:2px 7px;
+  border-radius:10px;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.2);color:var(--cyan)}
+.rec-clear{font-size:8px;padding:2px 8px;border-radius:6px;border:1px solid rgba(255,64,96,0.25);
+  background:rgba(255,64,96,0.08);color:var(--red);cursor:pointer;font-family:'IBM Plex Mono',monospace}
+.rec-clear:active{background:rgba(255,64,96,0.18)}
+.rec-empty{text-align:center;padding:14px;color:var(--muted);font-size:9px;font-family:'IBM Plex Mono',monospace}
+.rec-list{max-height:260px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(0,229,255,0.2) transparent}
+.rec-item{padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);
+  background:rgba(255,255,255,0.02);margin-bottom:5px}
+.rec-item:last-child{margin-bottom:0}
+.rec-item.rec-sell{border-color:rgba(255,64,96,0.25);background:rgba(255,64,96,0.04)}
+.rec-item.rec-buy{border-color:rgba(0,255,157,0.2);background:rgba(0,255,157,0.03)}
+.rec-item.rec-wait{border-color:rgba(245,200,66,0.2);background:rgba(245,200,66,0.03)}
+.rec-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.rec-sig{font-size:10px;font-weight:700;font-family:'Orbitron',sans-serif}
+.rec-sell .rec-sig{color:var(--red)}.rec-buy .rec-sig{color:var(--green)}.rec-wait .rec-sig{color:var(--gold)}
+.rec-time{font-size:8px;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+.rec-body{display:flex;gap:8px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace;font-size:8px}
+.rec-kv{display:flex;gap:3px}
+.rec-k{color:var(--muted)}.rec-v{color:var(--text)}
+.rec-conf{font-size:8px;padding:1px 6px;border-radius:8px;background:rgba(176,106,255,0.12);
+  color:var(--purple);border:1px solid rgba(176,106,255,0.2)}
+.rec-reason{font-size:8px;color:var(--muted);margin-top:3px;line-height:1.5;font-family:'IBM Plex Mono',monospace}
+
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(50px);
   background:var(--bg2);border:1px solid var(--borderG);border-radius:10px;padding:7px 16px;
   font-size:10px;color:var(--gold);font-family:'IBM Plex Mono',monospace;transition:transform .3s;z-index:999;white-space:nowrap;pointer-events:none}
@@ -387,7 +462,36 @@ canvas#mc{width:100%;border-radius:6px;display:block;cursor:crosshair}
 <div class="card"><div class="ct">FILTERS & GUARDS</div><div class="fg" id="fGrid"></div></div>
 <div class="card"><div class="ct">AI LOG <span id="logC">--</span></div><div id="logW"></div></div>
 
-<div class="brow">
+<div class="card rec-card">
+  <div class="ct">
+    <span>SMC AI ENGINE <span style="color:var(--purple)">v2</span></span>
+    <span style="color:var(--purple)">PIVOT-9</span>
+  </div>
+  <div class="smc-tabs">
+    <button class="smc-tab on" onclick="smcTab('swing')">SWING H/L</button>
+    <button class="smc-tab" onclick="smcTab('mtf')">MULTI-TF</button>
+    <button class="smc-tab" onclick="smcTab('choch')">CHoCH/BOS</button>
+    <button class="smc-tab" onclick="smcTab('liq')">LIQUIDITY</button>
+    <button class="smc-tab" onclick="smcTab('fibs')">FIB</button>
+    <button class="smc-tab" onclick="smcTab('final')">FINAL</button>
+  </div>
+  <div class="smc-pane show" id="smc-swing"><div id="smcSwingContent"></div></div>
+  <div class="smc-pane" id="smc-mtf"><div id="smcMtfContent"></div></div>
+  <div class="smc-pane" id="smc-choch"><div id="smcChochContent"></div></div>
+  <div class="smc-pane" id="smc-liq"><div id="smcLiqContent"></div></div>
+  <div class="smc-pane" id="smc-fibs"><div id="smcFibContent"></div></div>
+  <div class="smc-pane" id="smc-final"><div id="smcFinalContent"></div></div>
+</div>
+
+<div class="card rec-card">
+  <div class="rec-header">
+    <div class="ct" style="margin:0">🔔 ALERT RECORDS <span style="color:var(--cyan)" id="recCountLbl">0 รายการ</span></div>
+    <button class="rec-clear" onclick="clearAlertRecords()">ล้าง</button>
+  </div>
+  <div id="recList"><div class="rec-empty">ยังไม่มีการแจ้งเตือน<br>เปิด ALARM แล้วรอสัญญาณ</div></div>
+</div>
+
+
   <button class="abtn" id="aBtn" onclick="toggleAlarm()">
     <span id="aIco">🔔</span><span id="aTxt">ALARM OFF</span>
   </button>
@@ -764,6 +868,8 @@ function render(){
   // Chart
   window._lastR=r;
   drawChart(r);
+  // SMC AI Engine
+  if(typeof renderSMC === 'function') renderSMC();
 }
 
 // ===== TradingView-style Chart Engine =====
@@ -1194,7 +1300,445 @@ window.addEventListener('load',()=>{
 });
 window.addEventListener('resize',()=>{if(currentTVChart==='custom'){const r=compute();if(r)drawChart(r);}});
 
-// ── Crosshair ──
+
+// ═══════════════════════════════════════════════════════
+// SMC AI ENGINE v2 — Pivot-9 Swing Analysis
+// ═══════════════════════════════════════════════════════
+
+// Alert Records Storage
+const ALERT_RECORDS = [];
+const MAX_RECORDS = 50;
+
+function recordAlert(signal, confidence, entry, sl, tp1, tp2, rr, reason) {
+  const now = new Date();
+  ALERT_RECORDS.unshift({
+    id: Date.now(),
+    signal,
+    confidence,
+    entry: entry.toFixed(2),
+    sl: sl.toFixed(2),
+    tp1: tp1.toFixed(2),
+    tp2: tp2.toFixed(2),
+    rr: rr.toFixed(2),
+    reason,
+    time: now.toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),
+    date: now.toLocaleDateString('th-TH', {day:'2-digit',month:'2-digit',year:'2-digit'}),
+    gold: (S.gold||0).toFixed(2),
+    dxy: (S.dxy||0).toFixed(3),
+    mode: S.mode.toUpperCase(),
+  });
+  if (ALERT_RECORDS.length > MAX_RECORDS) ALERT_RECORDS.pop();
+  renderAlertRecords();
+}
+
+function renderAlertRecords() {
+  const list = document.getElementById('recList');
+  const lbl  = document.getElementById('recCountLbl');
+  lbl.textContent = ALERT_RECORDS.length + ' รายการ';
+  if (!ALERT_RECORDS.length) {
+    list.innerHTML = '<div class="rec-empty">ยังไม่มีการแจ้งเตือน<br>เปิด ALARM แล้วรอสัญญาณ</div>';
+    return;
+  }
+  list.innerHTML = '<div class="rec-list">' + ALERT_RECORDS.map(r => `
+<div class="rec-item rec-${r.signal.toLowerCase()}">
+  <div class="rec-top">
+    <span class="rec-sig">${r.signal==='SELL'?'🔴':r.signal==='BUY'?'🟢':'⚡'} ${r.signal}</span>
+    <span class="rec-conf">${r.confidence}/100</span>
+    <span class="rec-time">${r.date} ${r.time} · ${r.mode}</span>
+  </div>
+  <div class="rec-body">
+    <div class="rec-kv"><span class="rec-k">Gold:</span><span class="rec-v">${r.gold}</span></div>
+    <div class="rec-kv"><span class="rec-k">DXY:</span><span class="rec-v">${r.dxy}</span></div>
+    <div class="rec-kv"><span class="rec-k">Entry:</span><span class="rec-v" style="color:var(--gold)">${r.entry}</span></div>
+    <div class="rec-kv"><span class="rec-k">SL:</span><span class="rec-v" style="color:var(--red)">${r.sl}</span></div>
+    <div class="rec-kv"><span class="rec-k">TP1:</span><span class="rec-v" style="color:var(--green)">${r.tp1}</span></div>
+    <div class="rec-kv"><span class="rec-k">TP2:</span><span class="rec-v" style="color:var(--cyan)">${r.tp2}</span></div>
+    <div class="rec-kv"><span class="rec-k">R:R</span><span class="rec-v">1:${r.rr}</span></div>
+  </div>
+  <div class="rec-reason">${r.reason}</div>
+</div>`).join('') + '</div>';
+}
+
+function clearAlertRecords() {
+  ALERT_RECORDS.length = 0;
+  renderAlertRecords();
+  showToast('🗑 ล้าง Alert Records แล้ว');
+}
+
+// ── Pivot-9 Swing Detection ──────────────────────────
+function detectSwings(candles, pivot=4) {
+  const swings = [];
+  for (let i = pivot; i < candles.length - pivot; i++) {
+    const c = candles[i];
+    let isHigh = true, isLow = true;
+    for (let j = 1; j <= pivot; j++) {
+      if (candles[i-j].h >= c.h || candles[i+j].h >= c.h) isHigh = false;
+      if (candles[i-j].l <= c.l || candles[i+j].l <= c.l) isLow = false;
+    }
+    if (isHigh) swings.push({ type:'H', price: c.h, idx: i });
+    if (isLow)  swings.push({ type:'L', price: c.l, idx: i });
+  }
+  return swings;
+}
+
+function labelSwings(swings) {
+  const hs = swings.filter(s=>s.type==='H');
+  const ls = swings.filter(s=>s.type==='L');
+  const labeled = [];
+  hs.forEach((s,i)=>{
+    if(i===0){ labeled.push({...s,lbl:'SH'}); return; }
+    const prev = hs[i-1];
+    labeled.push({...s, lbl: s.price > prev.price ? 'HH' : 'LH'});
+  });
+  ls.forEach((s,i)=>{
+    if(i===0){ labeled.push({...s,lbl:'SL'}); return; }
+    const prev = ls[i-1];
+    labeled.push({...s, lbl: s.price < prev.price ? 'LL' : 'HL'});
+  });
+  labeled.sort((a,b)=>a.idx-b.idx);
+  return labeled;
+}
+
+function detectTrend(swings) {
+  const hs = swings.filter(s=>s.lbl==='HH'||s.lbl==='LH').slice(-3);
+  const ls = swings.filter(s=>s.lbl==='HL'||s.lbl==='LL').slice(-3);
+  if(!hs.length||!ls.length) return 'SIDEWAY';
+  const lastH = hs[hs.length-1], lastL = ls[ls.length-1];
+  if(lastH.lbl==='HH'&&lastL.lbl==='HL') return 'UPTREND';
+  if(lastH.lbl==='LH'&&lastL.lbl==='LL') return 'DOWNTREND';
+  return 'SIDEWAY';
+}
+
+// ── CHoCH Detection ──────────────────────────────────
+function detectCHoCH(swings, price) {
+  const hs = swings.filter(s=>s.lbl==='HH'||s.lbl==='LH');
+  const ls = swings.filter(s=>s.lbl==='HL'||s.lbl==='LL');
+  if(hs.length<2||ls.length<2) return {choch:false,dir:null,price:null,desc:'ข้อมูลไม่พอ'};
+
+  const recentH = hs.slice(-3), recentL = ls.slice(-3);
+  const lastHL = recentL.filter(s=>s.lbl==='HL').pop();
+  const lastLH = recentH.filter(s=>s.lbl==='LH').pop();
+
+  // CHoCH ลง: HH→HL→HH แล้วราคาหลุด HL
+  const prevHHs = recentH.filter(s=>s.lbl==='HH');
+  if(prevHHs.length>=1 && lastHL && price < lastHL.price) {
+    return {choch:true, dir:'DOWN', price:lastHL.price, desc:`หลุด HL ${lastHL.price.toFixed(0)}`};
+  }
+  // CHoCH ขึ้น: LL→LH→LL แล้วราคาทะลุ LH
+  const prevLLs = recentL.filter(s=>s.lbl==='LL');
+  if(prevLLs.length>=1 && lastLH && price > lastLH.price) {
+    return {choch:true, dir:'UP', price:lastLH.price, desc:`ทะลุ LH ${lastLH.price.toFixed(0)}`};
+  }
+  return {choch:false, dir:null, price:null, desc:'ยังไม่เกิด'};
+}
+
+// ── BOS Detection ────────────────────────────────────
+function detectBOS(swings, price, choch) {
+  if(!choch.choch) return {bos:false,dir:null,price:null,desc:'รอ CHoCH ก่อน'};
+  const hs = swings.filter(s=>s.lbl==='HH');
+  const ls = swings.filter(s=>s.lbl==='LL');
+  const lastHH = hs[hs.length-1], lastLL = ls[ls.length-1];
+
+  if(choch.dir==='DOWN' && lastLL && price < lastLL.price)
+    return {bos:true, dir:'DOWN', price:lastLL.price, desc:`LL ใหม่ ${lastLL.price.toFixed(0)}`};
+  if(choch.dir==='UP' && lastHH && price > lastHH.price)
+    return {bos:true, dir:'UP', price:lastHH.price, desc:`HH ใหม่ ${lastHH.price.toFixed(0)}`};
+  return {bos:false, dir:choch.dir, price:null, desc:'รอ Break '+( choch.dir==='UP'?`HH ${lastHH?.price.toFixed(0)||'--'}`:`LL ${lastLL?.price.toFixed(0)||'--'}` )};
+}
+
+// ── Liquidity Sweep ──────────────────────────────────
+function detectLiquiditySweep(swings, price, candles) {
+  if(!swings.length||!candles.length) return {sweep:false,type:null,level:null};
+  const recentSwH = swings.filter(s=>s.type==='H').slice(-4);
+  const recentSwL = swings.filter(s=>s.type==='L').slice(-4);
+  const prev = candles.length>1 ? candles[candles.length-2] : candles[0];
+  const cur = candles[candles.length-1];
+
+  for(const sh of recentSwH) {
+    // ราคาทะลุ High เดิม → ปิดกลับต่ำกว่า High
+    if(prev.h > sh.price && cur.c < sh.price)
+      return {sweep:true, type:'Sell-side', level:sh.price, desc:`ทะลุ High ${sh.price.toFixed(0)} แล้วกลับลง`};
+  }
+  for(const sl of recentSwL) {
+    if(prev.l < sl.price && cur.c > sl.price)
+      return {sweep:true, type:'Buy-side', level:sl.price, desc:`ทะลุ Low ${sl.price.toFixed(0)} แล้วกลับขึ้น`};
+  }
+  // Approximation: ถ้า price อยู่ใกล้ swing extreme ≤ 0.1%
+  const swH = Math.max(...recentSwH.map(s=>s.price));
+  const swL = Math.min(...recentSwL.map(s=>s.price));
+  if(Math.abs(price-swH)/swH<0.001)
+    return {sweep:true, type:'Sell-side', level:swH, desc:`ราคาใกล้ High ${swH.toFixed(0)}`};
+  if(Math.abs(price-swL)/swL<0.001)
+    return {sweep:true, type:'Buy-side', level:swL, desc:`ราคาใกล้ Low ${swL.toFixed(0)}`};
+  return {sweep:false, type:null, level:null, desc:'ไม่มี Sweep'};
+}
+
+// ── Fibonacci ─────────────────────────────────────────
+function calcFibonacci(swings, trend) {
+  const hs = swings.filter(s=>s.type==='H');
+  const ls = swings.filter(s=>s.type==='L');
+  if(!hs.length||!ls.length) return null;
+  const swH = Math.max(...hs.slice(-5).map(s=>s.price));
+  const swL = Math.min(...ls.slice(-5).map(s=>s.price));
+  const range = swH - swL;
+  if(trend==='UPTREND') {
+    return {
+      dir:'UP', high:swH, low:swL,
+      f50: swH-range*0.5,
+      f618: swH-range*0.618,
+      f786: swH-range*0.786,
+      goldZone: [swH-range*0.786, swH-range*0.618],
+    };
+  } else {
+    return {
+      dir:'DOWN', high:swH, low:swL,
+      f50: swL+range*0.5,
+      f618: swL+range*0.618,
+      f786: swL+range*0.786,
+      goldZone: [swL+range*0.618, swL+range*0.786],
+    };
+  }
+}
+
+// ── Multi-TF ─────────────────────────────────────────
+function smcMultiTF(candles4H, candles1H, price) {
+  const swH = detectSwings(candles4H, 4);
+  const labH = labelSwings(swH);
+  const trendHTF = detectTrend(labH);
+
+  const swL = detectSwings(candles1H, 4);
+  const labL = labelSwings(swL);
+  const trendLTF = detectTrend(labL);
+
+  let allow = 'WAIT';
+  if(trendHTF==='UPTREND') allow = 'BUY';
+  else if(trendHTF==='DOWNTREND') allow = 'SELL';
+  return {trendHTF, trendLTF, allow};
+}
+
+// ── SMC Full Analysis ─────────────────────────────────
+function computeSMC() {
+  if(!S.gold) return null;
+  const price = S.gold;
+  const candles4H = getCandles('4H');
+  const candles1H = getCandles('1H');
+  if(!candles4H.length) return null;
+
+  // Swing (HTF)
+  const swings = detectSwings(candles4H, 4);
+  const labeled = labelSwings(swings);
+  const trend = detectTrend(labeled);
+  const last5 = labeled.slice(-5);
+
+  // MTF
+  const mtf = smcMultiTF(candles4H, candles1H, price);
+
+  // CHoCH & BOS
+  const choch = detectCHoCH(labeled, price);
+  const bos   = detectBOS(labeled, price, choch);
+
+  // Liquidity
+  const liq = detectLiquiditySweep(swings, price, candles4H);
+
+  // Fibonacci
+  const fib = calcFibonacci(swings, trend);
+  const inGolden = fib ? (price >= fib.goldZone[0] && price <= fib.goldZone[1]) : false;
+
+  // Entry logic
+  const m = MODES[S.mode];
+  let signal = 'WAIT', confidence = 0, reason = [];
+
+  const htfOk = mtf.trendHTF !== 'SIDEWAY';
+  if(htfOk) { confidence += 20; reason.push('HTF '+mtf.trendHTF); }
+  if(liq.sweep) { confidence += 20; reason.push('Sweep: '+liq.type); }
+  if(choch.choch) { confidence += 20; reason.push('CHoCH '+choch.dir); }
+  if(bos.bos)    { confidence += 20; reason.push('BOS '+bos.dir); }
+  if(inGolden)   { confidence += 20; reason.push('Fib Golden Zone'); }
+
+  const r = compute();
+  const rrOk = r && r.rr >= m.rrMin;
+
+  if(confidence >= 80 && rrOk) {
+    signal = mtf.allow;
+    if(signal==='WAIT') signal = trend==='UPTREND'?'BUY':trend==='DOWNTREND'?'SELL':'WAIT';
+  }
+
+  return { price, trend, last5, mtf, choch, bos, liq, fib, inGolden, signal, confidence, reason: reason.join(' · '), rrOk };
+}
+
+// ── SMC Render ────────────────────────────────────────
+function renderSMC() {
+  const smc = computeSMC();
+  if(!smc) return;
+  const r = compute();
+
+  // SWING H/L
+  const trendColor = smc.trend==='UPTREND'?'var(--green)':smc.trend==='DOWNTREND'?'var(--red)':'var(--gold)';
+  document.getElementById('smcSwingContent').innerHTML = `
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+  <span style="font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace">TREND (HTF 4H)</span>
+  <span style="font-size:11px;font-weight:700;font-family:'Orbitron',sans-serif;color:${trendColor}">${smc.trend}</span>
+</div>
+${smc.last5.length ? smc.last5.slice(-5).map(s=>`
+<div class="sw-row">
+  <span class="sw-lbl">#${s.idx}</span>
+  <span style="font-family:'IBM Plex Mono',monospace;font-size:9px">${s.type==='H'?'▲ High':'▼ Low'} ${s.price.toFixed(1)}</span>
+  <span class="sw-badge ${s.lbl.toLowerCase()}">${s.lbl}</span>
+</div>`).join('') : '<div style="color:var(--muted);font-size:9px;text-align:center;padding:10px">กำลังวิเคราะห์ swing...</div>'}
+<div style="margin-top:6px;font-size:8px;color:var(--muted);font-family:\'IBM Plex Mono\',monospace">Pivot = 9 แท่ง (ซ้าย 4 ขวา 4) · แสดง 5 จุดล่าสุด</div>`;
+
+  // MULTI-TF
+  const htfCls = smc.mtf.trendHTF==='UPTREND'?'bull':smc.mtf.trendHTF==='DOWNTREND'?'bear':'side';
+  const ltfCls = smc.mtf.trendLTF==='UPTREND'?'bull':smc.mtf.trendLTF==='DOWNTREND'?'bear':'side';
+  const allowColor = smc.mtf.allow==='BUY'?'var(--green)':smc.mtf.allow==='SELL'?'var(--red)':'var(--gold)';
+  document.getElementById('smcMtfContent').innerHTML = `
+<div class="tf-grid">
+  <div class="tf-box ${htfCls}"><div class="tf-lbl">HTF · 4H</div><div class="tf-val">${smc.mtf.trendHTF}</div><div class="tf-sub">แนวโน้มหลัก</div></div>
+  <div class="tf-box ${ltfCls}"><div class="tf-lbl">LTF · 1H</div><div class="tf-val">${smc.mtf.trendLTF}</div><div class="tf-sub">โครงสร้างย่อย</div></div>
+</div>
+<div style="text-align:center;padding:8px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06)">
+  <div style="font-size:8px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:4px">อนุญาตให้</div>
+  <div style="font-size:16px;font-weight:900;font-family:'Orbitron',sans-serif;color:${allowColor}">${smc.mtf.allow==='BUY'?'🟢 BUY':smc.mtf.allow==='SELL'?'🔴 SELL':'⏸ WAIT'}</div>
+  <div style="font-size:8px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:3px">เทรดตาม HTF เท่านั้น · ห้ามสวน trend</div>
+</div>`;
+
+  // CHoCH / BOS
+  const cCls = smc.choch.choch ? (smc.choch.dir==='UP'?'true-up':'true-dn') : '';
+  const bCls = smc.bos.bos ? (smc.bos.dir==='UP'?'true-up':'true-dn') : '';
+  document.getElementById('smcChochContent').innerHTML = `
+<div class="choch-row ${cCls}">
+  <div class="choch-ico">${smc.choch.choch?(smc.choch.dir==='UP'?'📈':'📉'):'⏳'}</div>
+  <div class="choch-info">
+    <div class="choch-name">CHoCH — Change of Character</div>
+    <div class="choch-desc">${smc.choch.choch ? smc.choch.desc : 'รอโครงสร้าง HH→HL→HH หรือ LL→LH→LL'}</div>
+  </div>
+  <div class="choch-val">${smc.choch.choch?'✅ TRUE':'❌ FALSE'}<br>${smc.choch.dir||'--'}</div>
+</div>
+<div class="choch-row ${bCls}" style="margin-top:6px">
+  <div class="choch-ico">${smc.bos.bos?(smc.bos.dir==='UP'?'⬆️':'⬇️'):'🔒'}</div>
+  <div class="choch-info">
+    <div class="choch-name">BOS — Break of Structure</div>
+    <div class="choch-desc">${smc.bos.desc}</div>
+  </div>
+  <div class="choch-val">${smc.bos.bos?'✅ TRUE':'❌ FALSE'}<br>${smc.bos.dir||'--'}</div>
+</div>
+<div style="margin-top:8px;font-size:8px;color:var(--muted);font-family:'IBM Plex Mono',monospace;line-height:1.7">
+  📌 CHoCH = จุดเริ่มการเปลี่ยนแนวโน้ม (ต้องเกิดก่อน BOS)<br>
+  📌 BOS = ยืนยัน trend (ต้องเกิดหลัง CHoCH)
+</div>`;
+
+  // LIQUIDITY
+  const liqCls = smc.liq.sweep ? (smc.liq.type==='Buy-side'?'sweep-buy':'sweep-sell') : '';
+  document.getElementById('smcLiqContent').innerHTML = `
+<div class="liq-row ${liqCls}">
+  <div>
+    <div class="liq-lbl" style="font-size:9px;font-weight:700;color:${smc.liq.sweep?'var(--text)':'var(--muted)'}">
+      ${smc.liq.sweep ? (smc.liq.type==='Buy-side'?'🟢 Buy-side Sweep':'🔴 Sell-side Sweep') : '⏳ ไม่มี Liquidity Sweep'}
+    </div>
+    <div class="liq-lbl" style="margin-top:3px">${smc.liq.desc||'กำลังตรวจสอบ...'}</div>
+  </div>
+  <div class="liq-val" style="color:${smc.liq.sweep?'var(--gold)':'var(--muted)'}">
+    ${smc.liq.level ? smc.liq.level.toFixed(1) : '--'}
+  </div>
+</div>
+<div style="margin-top:8px;font-size:8px;color:var(--muted);font-family:'IBM Plex Mono',monospace;line-height:1.8">
+  📌 Sell-side = ราคาทะลุ High เดิม แล้วกลับลง (เตือน SELL)<br>
+  📌 Buy-side  = ราคาทะลุ Low เดิม แล้วกลับขึ้น (เตือน BUY)
+</div>`;
+
+  // FIBONACCI
+  const fib = smc.fib;
+  document.getElementById('smcFibContent').innerHTML = fib ? `
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+  <span style="font-size:8px;color:var(--muted);font-family:'IBM Plex Mono',monospace">ทิศทาง Fib</span>
+  <span style="font-size:10px;font-weight:700;color:${fib.dir==='UP'?'var(--green)':'var(--red)'}">${fib.dir==='UP'?'▲ Low → High':'▼ High → Low'}</span>
+</div>
+<div class="fib-row"><span class="fib-lbl">Swing High</span><span class="fib-val" style="color:var(--red)">${fib.high.toFixed(1)}</span></div>
+<div class="fib-row"><span class="fib-lbl">50.0%</span><span class="fib-val" style="color:var(--text)">${fib.f50.toFixed(1)}</span></div>
+<div class="fib-row golden"><span class="fib-lbl">61.8% 🏆</span><span class="fib-val">${fib.f618.toFixed(1)}</span></div>
+<div class="fib-row golden ${smc.inGolden?'active-price':''}"><span class="fib-lbl">78.6% ⚡${smc.inGolden?' ← PRICE':''}</span><span class="fib-val">${fib.f786.toFixed(1)}</span></div>
+<div class="fib-row"><span class="fib-lbl">Swing Low</span><span class="fib-val" style="color:var(--green)">${fib.low.toFixed(1)}</span></div>
+<div style="margin-top:7px;padding:6px 9px;border-radius:7px;background:rgba(245,200,66,0.08);border:1px solid rgba(245,200,66,0.25)">
+  <div style="font-size:8px;color:var(--gold);font-family:'IBM Plex Mono',monospace">🎯 Golden Zone: ${fib.goldZone[0].toFixed(1)} – ${fib.goldZone[1].toFixed(1)}</div>
+  <div style="font-size:8px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:2px">ราคา ${smc.inGolden?'<span style="color:var(--green)">✅ อยู่ใน Golden Zone</span>':'<span style="color:var(--muted)">ยังไม่ถึง</span>'}</div>
+</div>` : '<div style="color:var(--muted);font-size:9px;text-align:center;padding:12px">กำลังคำนวณ Fibonacci...</div>';
+
+  // FINAL SIGNAL
+  const sigColor = smc.signal==='BUY'?'var(--green)':smc.signal==='SELL'?'var(--red)':'var(--gold)';
+  const checks = [
+    ['HTF Trend', smc.mtf.trendHTF!=='SIDEWAY', smc.mtf.trendHTF],
+    ['CHoCH', smc.choch.choch, smc.choch.desc||'ยังไม่เกิด'],
+    ['BOS', smc.bos.bos, smc.bos.desc||'ยังไม่เกิด'],
+    ['Liquidity Sweep', smc.liq.sweep, smc.liq.desc||'ไม่มี Sweep'],
+    ['Fibonacci Zone', smc.inGolden, smc.inGolden?'อยู่ใน Golden Zone':'ยังไม่ถึง'],
+    ['Risk:Reward', smc.rrOk, r?`R:R ${r.rr.toFixed(1)}`:'N/A'],
+  ];
+  document.getElementById('smcFinalContent').innerHTML = `
+<div style="text-align:center;padding:10px 0 8px">
+  <div style="font-size:22px;font-weight:900;font-family:'Orbitron',sans-serif;color:${sigColor}">
+    ${smc.signal==='BUY'?'🟢 BUY':smc.signal==='SELL'?'🔴 SELL':'⏸ WAIT'}
+  </div>
+  <div style="display:flex;justify-content:center;gap:8px;margin-top:5px">
+    <span style="font-size:9px;font-family:'IBM Plex Mono',monospace;color:var(--purple)">SMC Score: ${smc.confidence}/100</span>
+  </div>
+</div>
+${checks.map(([name,ok,val])=>`
+<div class="choch-row ${ok?'true-up':''}">
+  <div class="choch-ico">${ok?'✅':'❌'}</div>
+  <div class="choch-info"><div class="choch-name">${name}</div><div class="choch-desc">${val}</div></div>
+</div>`).join('')}
+<div style="margin-top:8px;font-size:8px;color:var(--muted);font-family:'IBM Plex Mono',monospace;line-height:1.7;padding:6px 9px;background:rgba(255,255,255,0.02);border-radius:6px">
+  ${smc.reason || 'รอเงื่อนไขครบ...'}
+</div>`;
+}
+
+// ── SMC Tab Switcher ──────────────────────────────────
+function smcTab(t) {
+  ['swing','mtf','choch','liq','fibs','final'].forEach(k=>{
+    document.getElementById('smc-'+k).classList.toggle('show', k===t);
+  });
+  document.querySelectorAll('.smc-tab').forEach((b,i)=>{
+    const keys=['swing','mtf','choch','liq','fibs','final'];
+    b.classList.toggle('on', keys[i]===t);
+  });
+}
+
+// ── Override alarm() to also record ──────────────────
+const _origAlarm = alarm;
+let _lastAlarmSignal = null;
+let _lastAlarmTime = 0;
+
+// Replace the global alarm function so render()'s `if(S.alarmOn) alarm()` uses the new version
+window.alarm = function alarmWithRecord() {
+  _origAlarm();
+  const r = compute();
+  const smc = computeSMC();
+  if(!r) return;
+  const now = Date.now();
+  // Throttle: ไม่บันทึกซ้ำภายใน 60 วินาที
+  if(now - _lastAlarmTime < 60000 && _lastAlarmSignal === r.side) return;
+  _lastAlarmSignal = r.side;
+  _lastAlarmTime = now;
+
+  const smcScore = smc ? smc.confidence : 0;
+  const combinedConf = Math.round((r.tot + smcScore) / 2);
+  const reason = [
+    `Mode: ${MODES[S.mode].label}`,
+    `Score: ${r.tot}/100`,
+    smc ? `SMC: ${smc.confidence}/100` : '',
+    `BOS: ${r.bos?'✓':'✗'}`,
+    `CHoCH: ${r.choch?'✓':'✗'}`,
+    smc?.liq?.sweep ? `Sweep: ${smc.liq.type}` : '',
+    `Fib: ${r.inKZ?'IN KZ':'OUT'}`,
+    `Session: ${r.se.name}`,
+  ].filter(Boolean).join(' · ');
+
+  recordAlert(r.side, combinedConf, r.entry, r.sl, r.tp1, r.tp2, r.rr, reason);
+};
+
+// ── SMC renders via render() hook above ───────────────
+
+
 (function(){
   const cv=document.getElementById('mc');
   let lastR=null;
