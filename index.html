@@ -263,6 +263,46 @@ canvas#mc{width:100%;border-radius:6px;display:block;cursor:crosshair}
 .rec-clear{font-size:8px;padding:2px 8px;border-radius:6px;border:1px solid rgba(255,64,96,0.25);
   background:rgba(255,64,96,0.08);color:var(--red);cursor:pointer;font-family:'IBM Plex Mono',monospace}
 .rec-clear:active{background:rgba(255,64,96,0.18)}
+.rec-outcome{display:flex;gap:4px;margin-top:5px}
+.rec-btn-win{flex:1;padding:4px;border-radius:6px;border:1px solid rgba(0,255,157,0.35);background:rgba(0,255,157,0.08);color:var(--green);font-family:'IBM Plex Mono',monospace;font-size:8px;cursor:pointer;font-weight:700}
+.rec-btn-win:active,.rec-btn-win.active{background:rgba(0,255,157,0.25);border-color:var(--green)}
+.rec-btn-fail{flex:1;padding:4px;border-radius:6px;border:1px solid rgba(255,64,96,0.35);background:rgba(255,64,96,0.08);color:var(--red);font-family:'IBM Plex Mono',monospace;font-size:8px;cursor:pointer;font-weight:700}
+.rec-btn-fail:active,.rec-btn-fail.active{background:rgba(255,64,96,0.25);border-color:var(--red)}
+.rec-outcome-badge{font-size:8px;padding:1px 7px;border-radius:8px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.rec-outcome-badge.win{background:rgba(0,255,157,0.15);color:var(--green);border:1px solid rgba(0,255,157,0.3)}
+.rec-outcome-badge.fail{background:rgba(255,64,96,0.15);color:var(--red);border:1px solid rgba(255,64,96,0.3)}
+.winrate-bar{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;
+  background:rgba(176,106,255,0.06);border:1px solid rgba(176,106,255,0.2);margin-bottom:6px;font-family:'IBM Plex Mono',monospace;font-size:9px}
+.winrate-num{font-size:14px;font-weight:900;font-family:'Orbitron',sans-serif;color:var(--purple)}
+.gs-btn{padding:4px 10px;border-radius:6px;border:1px solid rgba(0,229,255,0.3);background:rgba(0,229,255,0.08);
+  color:var(--cyan);font-family:'IBM Plex Mono',monospace;font-size:8px;cursor:pointer;white-space:nowrap}
+.gs-btn:active{background:rgba(0,229,255,0.2)}
+/* Webhook config card */
+.wh-card{border-color:rgba(0,255,157,0.2);background:linear-gradient(135deg,rgba(0,255,157,0.03),rgba(0,229,255,0.02))}
+.wh-row{display:flex;align-items:center;gap:6px;margin-bottom:7px}
+.wh-inp{flex:1;background:rgba(0,255,157,0.06);border:1px solid rgba(0,255,157,0.2);border-radius:6px;
+  color:var(--green);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:5px 9px;outline:none;min-width:0}
+.wh-inp:focus{border-color:var(--green);background:rgba(0,255,157,0.1)}
+.wh-inp::placeholder{color:var(--muted)}
+.wh-save{padding:5px 11px;border-radius:6px;border:1px solid rgba(0,255,157,0.35);background:rgba(0,255,157,0.1);
+  color:var(--green);font-family:'IBM Plex Mono',monospace;font-size:9px;cursor:pointer;white-space:nowrap;font-weight:700}
+.wh-save:active{background:rgba(0,255,157,0.22)}
+.wh-status{display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:8px}
+.wh-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s}
+.wh-dot.on{background:var(--green);box-shadow:0 0 6px rgba(0,255,157,0.5);animation:blink 2s infinite}
+.wh-dot.err{background:var(--red)}
+.wh-dot.sending{background:var(--gold);animation:blink .4s infinite}
+.wh-log{max-height:80px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(0,255,157,0.15) transparent;
+  margin-top:6px;padding:5px 8px;border-radius:6px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.04)}
+.wh-log-item{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--muted);
+  padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.03);line-height:1.5}
+.wh-log-item:last-child{border-bottom:none}
+.wh-log-item.ok{color:var(--green)}.wh-log-item.err{color:var(--red)}.wh-log-item.send{color:var(--gold)}
+.wh-test{padding:4px 9px;border-radius:5px;border:1px solid rgba(245,200,66,0.3);background:rgba(245,200,66,0.07);
+  color:var(--gold);font-family:'IBM Plex Mono',monospace;font-size:8px;cursor:pointer;white-space:nowrap}
+.wh-test:active{background:rgba(245,200,66,0.18)}
+.wh-clear{padding:4px 8px;border-radius:5px;border:1px solid rgba(255,255,255,0.08);background:transparent;
+  color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:8px;cursor:pointer}
 .rec-empty{text-align:center;padding:14px;color:var(--muted);font-size:9px;font-family:'IBM Plex Mono',monospace}
 .rec-list{max-height:260px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(0,229,255,0.2) transparent}
 .rec-item{padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);
@@ -438,7 +478,7 @@ canvas#mc{width:100%;border-radius:6px;display:block;cursor:crosshair}
   <div class="ct">KEY ZONES <span>DYNAMIC</span></div>
   <div class="zr r"><div><div class="zn">RESISTANCE / SL</div><div class="zh">Supply · Fib 61.8%</div></div>
     <div style="text-align:right"><div class="zp" id="zR">--</div><div class="zb">SUPPLY</div></div></div>
-  <div class="zr e" style="margin-top:6px"><div><div class="zn">⚡ ENTRY ZONE</div><div class="zh">Kill Zone · 78.6%</div></div>
+  <div class="zr e" style="margin-top:6px"><div><div class="zn">⚡ ENTRY ZONE</div><div class="zh">Golden Zone · 61.8%–78.6%</div></div>
     <div style="text-align:right"><div class="zp" id="zE">--</div><div class="zb">ACTIVE</div></div></div>
   <div class="zr s" style="margin-top:6px"><div><div class="zn">SUPPORT / TP</div><div class="zh">Demand</div></div>
     <div style="text-align:right"><div class="zp" id="zS">--</div><div class="zb">DEMAND</div></div></div>
@@ -483,10 +523,100 @@ canvas#mc{width:100%;border-radius:6px;display:block;cursor:crosshair}
   <div class="smc-pane" id="smc-final"><div id="smcFinalContent"></div></div>
 </div>
 
+<div class="card wh-card">
+  <div class="ct">📡 GOOGLE SHEETS WEBHOOK <span style="color:var(--green)" id="whStatusLabel">ยังไม่ตั้งค่า</span></div>
+
+  <!-- URL input -->
+  <div class="wh-row">
+    <input class="wh-inp" id="whUrlInp" type="url"
+      placeholder="https://script.google.com/macros/s/…/exec"
+      oninput="onWhUrlChange()" readonly
+      style="opacity:0.7;cursor:default"
+      title="URL ฝังแล้ว — กด ✕ แล้ว SAVE เพื่อเปลี่ยน">
+    <button class="wh-save" onclick="saveWebhook()">SAVE</button>
+  </div>
+
+  <!-- Status + Test -->
+  <div class="wh-status">
+    <div class="wh-dot" id="whDot"></div>
+    <span id="whStatusTxt" style="color:var(--muted)">วาง Webhook URL แล้วกด SAVE</span>
+    <span style="flex:1"></span>
+    <button class="wh-test" onclick="testWebhook()" id="whTestBtn" disabled>TEST</button>
+    <button class="wh-clear" onclick="unlockWhUrl()" title="แก้ไข URL">✎</button>
+  </div>
+
+  <!-- How-to guide (collapsible) -->
+  <details style="margin-top:8px">
+    <summary style="font-size:8px;color:var(--muted);font-family:'IBM Plex Mono',monospace;cursor:pointer;user-select:none">
+      ℹ️ รายละเอียด Webhook + Apps Script Code (คลิกดู)
+    </summary>
+    <div style="margin-top:7px;padding:8px 10px;border-radius:7px;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.05);font-family:'IBM Plex Mono',monospace;font-size:8px;line-height:1.9;color:var(--muted)">
+      <div style="color:var(--gold);margin-bottom:4px;font-weight:700">✅ Webhook ฝังแล้ว — พร้อมใช้งานทันที</div>
+      <div style="color:var(--green);margin-bottom:6px">ทุก signal จะส่งเข้า Google Sheet อัตโนมัติ</div>
+      <div>• Signal ใหม่ → row ใหม่ใน Sheet "Signals"</div>
+      <div>• กด ✅ WIN / ❌ FAIL → บันทึก outcome ลง Sheet</div>
+      <div>• กด TEST เพื่อส่ง ping ยืนยันการเชื่อมต่อ</div>
+      <div style="margin-top:5px;color:var(--muted)">ต้องการเปลี่ยน Sheet? กด ✎ แล้วแก้ URL ใหม่</div>
+      <div style="margin-top:6px;color:var(--muted);border-top:1px solid rgba(255,255,255,0.05);padding-top:6px">Apps Script Code (สำหรับ Sheet ใหม่):</div>
+      <div style="margin-top:6px;padding:6px 8px;border-radius:5px;background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.15)">
+        <div style="color:var(--cyan);margin-bottom:3px">Apps Script Code:</div>
+        <div id="gasCodeBlock" style="color:#a0c8e0;line-height:1.7;white-space:pre-wrap;word-break:break-all">function doPost(e){
+  try{
+    var d=JSON.parse(e.postData.contents);
+    var ss=SpreadsheetApp.getActiveSpreadsheet();
+    var sh=ss.getSheetByName('Signals')||ss.insertSheet('Signals');
+    if(sh.getLastRow()===0){
+      sh.appendRow(['Date','Time','Mode','Signal',
+        'Confidence','Gold','DXY','Entry','SL',
+        'TP1','TP2','R:R','Trend','Zone','Reason']);
+      sh.getRange(1,1,1,15).setFontWeight('bold')
+        .setBackground('#1a1a2e').setFontColor('#f5c842');
+    }
+    sh.appendRow([d.date,d.time,d.mode,d.signal,
+      d.confidence,d.gold,d.dxy,d.entry,d.sl,
+      d.tp1,d.tp2,d.rr,d.trend,d.zone,d.reason]);
+    return ContentService.createTextOutput(
+      JSON.stringify({ok:true,row:sh.getLastRow()}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }catch(err){
+    return ContentService.createTextOutput(
+      JSON.stringify({ok:false,error:err.message}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+function doGet(e){
+  return ContentService.createTextOutput(
+    JSON.stringify({ok:true,msg:'Gold Sentinel Webhook Ready'}))
+    .setMimeType(ContentService.MimeType.JSON);
+}</div>
+        <button onclick="copyGASCode()" style="margin-top:5px;padding:3px 9px;border-radius:5px;border:1px solid rgba(0,229,255,0.3);background:rgba(0,229,255,0.1);color:var(--cyan);font-family:'IBM Plex Mono',monospace;font-size:8px;cursor:pointer">📋 Copy Code</button>
+      </div>
+    </div>
+  </details>
+
+  <!-- Send log -->
+  <div id="whLog" class="wh-log" style="display:none"></div>
+</div>
+
 <div class="card rec-card">
   <div class="rec-header">
     <div class="ct" style="margin:0">🔔 ALERT RECORDS <span style="color:var(--cyan)" id="recCountLbl">0 รายการ</span></div>
-    <button class="rec-clear" onclick="clearAlertRecords()">ล้าง</button>
+    <div style="display:flex;gap:5px;align-items:center">
+      <button class="gs-btn" onclick="exportToSheets()">⬇️ CSV</button>
+      <button class="rec-clear" onclick="clearAlertRecords()">ล้าง</button>
+    </div>
+  </div>
+  <div class="winrate-bar" id="winrateBar" style="display:none">
+    <div>
+      <div style="font-size:7px;color:var(--muted);letter-spacing:2px;margin-bottom:2px">WIN RATE</div>
+      <div class="winrate-num" id="winrateNum">--%</div>
+    </div>
+    <div style="flex:1">
+      <div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;margin-bottom:4px">
+        <div id="winrateBar2" style="height:100%;border-radius:3px;background:linear-gradient(90deg,var(--green),var(--cyan));transition:width .8s"></div>
+      </div>
+      <div style="font-size:8px;color:var(--muted)"><span id="winCount" style="color:var(--green)">0W</span> / <span id="failCount" style="color:var(--red)">0F</span> / <span id="pendCount">0P</span> · ทำเครื่องหมาย WIN/FAIL แต่ละ signal</div>
+    </div>
   </div>
   <div id="recList"><div class="rec-empty">ยังไม่มีการแจ้งเตือน<br>เปิด ALARM แล้วรอสัญญาณ</div></div>
 </div>
@@ -508,7 +638,7 @@ const GOLD_URL='https://gold-proxy.worrawut-won.workers.dev/';
 const FX_URL='https://api.frankfurter.app/latest?from=USD&to=EUR,JPY,GBP,CAD,SEK,CHF';
 
 const MODES={
-  scalp:   {label:'SCALP',   minScore:70,rrMin:1.5,slPct:0.5, tp1Pct:0.8, tp2Pct:1.5, w:{smc:25,fib:25,corr:25,vol:25}},
+  scalp:   {label:'SCALP',   minScore:80,rrMin:1.5,slPct:0.5, tp1Pct:0.8, tp2Pct:1.5, w:{smc:25,fib:25,corr:25,vol:25}},
   swing:   {label:'SWING',   minScore:65,rrMin:2.0,slPct:1.2, tp1Pct:2.5, tp2Pct:4.0, w:{smc:30,fib:20,corr:30,vol:20}},
   position:{label:'POSITION',minScore:60,rrMin:3.0,slPct:3.0, tp1Pct:8.0, tp2Pct:15.0,w:{smc:35,fib:15,corr:35,vol:15}},
 };
@@ -577,13 +707,12 @@ async function getDXY(){
   return parseFloat(raw.toFixed(3));
 }
 
-// Baseline history จากกราฟที่เห็น — ใช้เป็น seed ก่อนที่ real-time จะสะสมพอ
-const BASELINE_HIST = [5602,5400,5200,5000,4900,4800,4700,4650,4600,4550,4500,4477];
-
+// ไม่มี BASELINE_HIST — ใช้ราคาจริงจาก API สะสม
+// seed ครั้งแรกด้วยราคาปัจจุบัน ×12 เพื่อให้ Fib/SMC คำนวณได้ทันที
 function buildHist(p){
-  // ถ้า hist ยังน้อยกว่า 12 จุด ให้ใช้ baseline ก่อน
-  const base = S.hist.length < 12 ? BASELINE_HIST : S.hist;
-  const h=[...base, p];
+  const h = S.hist.length === 0
+    ? Array(12).fill(p)   // seed ครั้งแรก: ใช้ราคาปัจจุบันซ้ำ 12 จุด
+    : [...S.hist, p];
   if(h.length>24) h.shift();
   return h;
 }
@@ -609,21 +738,21 @@ async function fetchAll(){
   }
 
   // ดึง DXY — ถ้า Worker ใหม่ส่ง dxy.value มาแล้ว ใช้เลย (real-time)
-  let dxyPrice=S.dxy||99.5;
+  let dxyPrice = S.dxy; // null จนกว่า API จะตอบกลับ
   if(S.dxyManual!==null){
     dxyPrice=S.dxyManual;
   } else if(goldData.dxy?.value){
     // ✅ Worker ใหม่: dxy real-time จาก EURUSD gold-api
     dxyPrice=goldData.dxy.value;
     const src=goldData.dxy.source||'worker';
-    setStat('ok',`Gold ${goldData.price.toFixed(2)} · DXY ${dxyPrice.toFixed(3)} (${src})`);
+    setStat('ok',`Gold ${goldData.price.toFixed(2)} · DXY ${dxyPrice!==null?dxyPrice.toFixed(3):'--'} (${src})`);
   } else {
     // Fallback: Frankfurter
     try{
       dxyPrice=await getDXY();
     }catch(e){
       console.warn('DXY fetch failed, using last value:',e.message);
-      showToast('⚠️ DXY ใช้ค่าเดิม: '+dxyPrice.toFixed(3));
+      showToast('⚠️ DXY ใช้ค่าเดิม: '+(dxyPrice!==null?dxyPrice.toFixed(3):'--'));
     }
   }
 
@@ -633,9 +762,9 @@ async function fetchAll(){
   S.gold=goldData.price; S.dxy=dxyPrice;
   S.hist=buildHist(S.gold);
   S.goldSpk=S.hist.slice(-10);
-  S.dxySpk=[...(S.dxySpk.length?S.dxySpk:[dxyPrice]),dxyPrice].slice(-10);
+  S.dxySpk=dxyPrice!==null?[...(S.dxySpk.length?S.dxySpk:[dxyPrice]),dxyPrice].slice(-10):S.dxySpk;
   S.isLive=true; S.fetchN++; S.lastFetch=new Date();
-  setStat('ok',`Gold ${S.gold.toFixed(2)} · DXY ${dxyPrice.toFixed(3)}`);
+  setStat('ok',`Gold ${S.gold.toFixed(2)} · DXY ${dxyPrice!==null?dxyPrice.toFixed(3):'รอ API'}`);
   setPill('live','LIVE');
   document.getElementById('notice').classList.add('hide');
   document.getElementById('cSrc').textContent='LIVE';
@@ -669,37 +798,83 @@ function compute(){
   const h=S.hist.length>1?S.hist:[g];
   let sc={smc:0,fib:0,corr:0,vol:0};
 
-  // Fib จาก swing ใหญ่ที่เห็นในกราฟ (ไม่ใช้ hist ที่แคบมาก)
-  // Swing High = max ของ hist ทั้งหมด, Swing Low = min
+  // ── Fib: swing high/low จาก hist จริง ──
   const fH=Math.max(...h), fL=Math.min(...h);
-  const fibRange=fH-fL;
-  const f618=fH-fibRange*0.618;  // ~4825 จาก swing 5602→4477
-  const f786=fH-fibRange*0.786;  // ~4614
+  const fibRange=fH-fL||1;
+  const f618=fH-fibRange*0.618;
+  const f786=fH-fibRange*0.786;
+  // Golden Zone = 61.8%–78.6% ของ swing (retracement จาก High)
+  const goldenLow  = Math.min(f618, f786);   // f786 < f618
+  const goldenHigh = Math.max(f618, f786);
+  const inKZ = g >= goldenLow && g <= goldenHigh; // ← Golden Zone 61.8%–78.6% จริงๆ
 
-  // SMC — ใช้ baseline hist เพื่อตัดสิน trend
-  const recent=h.slice(-5);
-  const bos=g<=Math.min(...recent)*1.002;
-  const choch=h.length>3&&h[h.length-1]<h[h.length-3];
-  const ll=g<fH*0.85; // ราคาต่ำกว่า 85% ของ swing high = bearish
-  if(bos)   sc.smc+=Math.round(w.smc*.5);
-  if(choch) sc.smc+=Math.round(w.smc*.3);
-  if(ll)    sc.smc+=Math.round(w.smc*.2);
+  // ── SMC: ใช้ Pivot-9 candles ถ้ามี, ไม่งั้นใช้ hist fallback ──
+  let trend = 'SIDEWAY';
+  let chochBull=false, chochBear=false, bosBull=false, bosBear=false;
+  let chochDesc='', bosDesc='';
+  // try SMC candles
+  try {
+    const candles4H = getCandles('4H');
+    if(candles4H.length >= 9) {
+      const swings4H = detectSwings(candles4H, 4);
+      const labeled4H = labelSwings(swings4H);
+      trend = detectTrend(labeled4H);
+      const chochRes = detectCHoCH(labeled4H, g);
+      const bosRes   = detectBOS(labeled4H, g, chochRes);
+      chochBull = chochRes.choch && chochRes.dir === 'UP';
+      chochBear = chochRes.choch && chochRes.dir === 'DOWN';
+      bosBull   = bosRes.bos && bosRes.dir === 'UP';
+      bosBear   = bosRes.bos && bosRes.dir === 'DOWN';
+      chochDesc = chochRes.desc || '';
+      bosDesc   = bosRes.desc   || '';
+    }
+  } catch(e) {}
+  // fallback to raw hist if SMC candles not ready
+  if(trend==='SIDEWAY' && h.length>3) {
+    const last5 = h.slice(-5);
+    chochBear = h[h.length-1] < h[h.length-3];
+    chochBull = h[h.length-1] > h[h.length-3];
+    bosBear   = g <= Math.min(...last5)*1.002;
+    bosBull   = g >= Math.max(...last5)*0.998;
+  }
+  const bos   = bosBull || bosBear;
+  const choch = chochBull || chochBear;
+
+  // ── SMC Score — symmetric SELL/BUY ──
+  if(trend==='DOWNTREND') {
+    if(bosBear)   sc.smc += Math.round(w.smc*.5);
+    if(chochBear) sc.smc += Math.round(w.smc*.3);
+    if(g < fH*0.9) sc.smc += Math.round(w.smc*.2);
+  } else if(trend==='UPTREND') {
+    if(bosBull)   sc.smc += Math.round(w.smc*.5);
+    if(chochBull) sc.smc += Math.round(w.smc*.3);
+    if(g > fL*1.1) sc.smc += Math.round(w.smc*.2);
+  } else {
+    // SIDEWAY fallback
+    if(bos)   sc.smc += Math.round(w.smc*.4);
+    if(choch) sc.smc += Math.round(w.smc*.2);
+  }
   sc.smc=Math.min(sc.smc,w.smc);
 
-  // Fib — อยู่ใน Kill Zone หรือเปล่า
-  const inKZ=g>=fL&&g<=f618;
-  const n786=Math.abs(g-f786)<fibRange*.08;
-  if(inKZ)  sc.fib+=Math.round(w.fib*.6);
-  if(n786)  sc.fib+=Math.round(w.fib*.4);
+  // ── Fib Score — Golden Zone 61.8%–78.6% ──
+  if(inKZ)  sc.fib += Math.round(w.fib*.7);
+  const n786=Math.abs(g-f786)<fibRange*.04;
+  if(n786)  sc.fib += Math.round(w.fib*.3);
   sc.fib=Math.min(sc.fib,w.fib);
 
-  // DXY Correlation — ราคาต่ำกว่า Swing High 10%+ = bearish gold
-  const dB=d>99.0, dS=d>99.8;
-  const gBr=g<fH*0.90; // gold ต่ำกว่า swing high ≥10% = bearish
-  const al=dB&&gBr;
-  if(al)       sc.corr+=Math.round(w.corr*.7);
-  if(dS)       sc.corr+=Math.round(w.corr*.3);
-  else if(dB)  sc.corr+=Math.round(w.corr*.15);
+  // ── DXY Correlation — symmetric ──
+  const dxyOk = d !== null;
+  const dB = dxyOk && d > 99.0;
+  const dS = dxyOk && d > 99.8;
+  const dWeak = dxyOk && d < 98.5; // DXY อ่อน → Gold bullish
+  const gBr = g < fH*0.90;  // gold ต่ำกว่า swing high ≥10%
+  const gBull = g > fL*1.10; // gold สูงกว่า swing low ≥10%
+  const alSell = dB && gBr;
+  const alBuy  = dWeak && gBull;
+  if(alSell || alBuy) sc.corr += Math.round(w.corr*.7);
+  if(dS) sc.corr += Math.round(w.corr*.3);
+  else if(dWeak) sc.corr += Math.round(w.corr*.3);
+  else if(dB) sc.corr += Math.round(w.corr*.15);
   sc.corr=Math.min(sc.corr,w.corr);
 
   const se=sess();
@@ -707,25 +882,36 @@ function compute(){
 
   const tot=sc.smc+sc.fib+sc.corr+sc.vol;
 
-  // Side — SELL เท่านั้นถ้า bearish, BUY ถ้า reversal zone
+  // ── Side — symmetric BUY/SELL ──
   let side='WAIT';
-  if(tot>=m.minScore&&sc.corr>=Math.round(w.corr*.5)&&sc.smc>=Math.round(w.smc*.4)){
-    side=(dB&&gBr)?'SELL':'BUY';
+  const coreOk = tot>=m.minScore && sc.smc>=Math.round(w.smc*.4);
+  if(coreOk) {
+    if((alSell || (trend==='DOWNTREND'&&gBr)) && sc.corr>=Math.round(w.corr*.4)) side='SELL';
+    else if((alBuy || (trend==='UPTREND'&&gBull)) && sc.corr>=Math.round(w.corr*.4)) side='BUY';
   }
 
-  // SL/TP — SELL: SL เหนือ Entry, TP ต่ำกว่า Entry
-  const entry=g, isSell=side==='SELL';
-  const sl  = isSell ? entry*(1+m.slPct/100)  : entry*(1-m.slPct/100);
-  const tp1 = isSell ? entry*(1-m.tp1Pct/100) : entry*(1+m.tp1Pct/100);
-  const tp2 = isSell ? entry*(1-m.tp2Pct/100) : entry*(1+m.tp2Pct/100);
-  const rr  = Math.abs(entry-tp1)/Math.abs(entry-sl);
+  // ── SL/TP: SMC-based (swing levels) + % fallback ──
+  const isSell = side==='SELL';
+  const isBuy  = side==='BUY';
+  // SL: เหนือ swing high (SELL) หรือ ใต้ swing low (BUY) ตาม SMC
+  const smcSlSell = fH + fibRange*0.05;   // เหนือ swing high นิดนึง
+  const smcSlBuy  = fL - fibRange*0.05;   // ใต้ swing low นิดนึง
+  const pctSl  = g * (m.slPct/100);
+  const sl  = isSell ? Math.max(smcSlSell, g*(1+m.slPct/100))
+             : isBuy  ? Math.min(smcSlBuy,  g*(1-m.slPct/100))
+             : g*(1+m.slPct/100);
+  const tp1 = isSell ? g*(1-m.tp1Pct/100) : g*(1+m.tp1Pct/100);
+  const tp2 = isSell ? g*(1-m.tp2Pct/100) : g*(1+m.tp2Pct/100);
+  const rr  = Math.abs(g-tp1)/Math.abs(g-sl)||0;
 
-  // Zones คำนวณจาก Fib จริง
-  const zR=`${(f618).toFixed(0)}–${(f618+fibRange*.05).toFixed(0)}`;
-  const zE=`${(f786-30).toFixed(0)}–${(f786+30).toFixed(0)}`;
+  // Zones
+  const zR=`${goldenHigh.toFixed(0)}–${(goldenHigh+fibRange*.05).toFixed(0)}`;
+  const zE=`${goldenLow.toFixed(0)}–${goldenHigh.toFixed(0)}`;
   const zS=`${(fL).toFixed(0)}–${(fL+fibRange*.05).toFixed(0)}`;
 
-  return {tot,sc,side,entry,sl,tp1,tp2,rr,bos,choch,ll,inKZ,n786,al,dB,dS,gBr,se,fH,fL,f618,f786,g,d,zR,zE,zS};
+  return {tot,sc,side,entry:g,sl,tp1,tp2,rr,bos,choch,chochBull,chochBear,bosBull,bosBear,
+    chochDesc,bosDesc,trend,inKZ,n786,al:alSell||alBuy,alSell,alBuy,dB,dS,dWeak,gBr,gBull,
+    se,fH,fL,f618,f786,goldenLow,goldenHigh,g,d,zR,zE,zS};
 }
 
 function render(){
@@ -739,10 +925,10 @@ function render(){
   ge.textContent=`${gC>=0?'▲':'▼'} ${Math.abs(gC).toFixed(2)} (${Math.abs(gP).toFixed(2)}%)`;
   ge.className='pc2 '+(gC>=0?'up':'dn');
   document.getElementById('gT').textContent='🟢 '+now;
-  const dC=S.dxyPrev?S.dxy-S.dxyPrev:0, dP=S.dxyPrev?dC/S.dxyPrev*100:0;
-  document.getElementById('dP').textContent=S.dxy.toFixed(3)+(S.dxyManual!==null?' ✎':'');
+  const dC=S.dxyPrev&&S.dxy?S.dxy-S.dxyPrev:0, dP=S.dxyPrev&&S.dxy?dC/S.dxyPrev*100:0;
+  document.getElementById('dP').textContent=S.dxy!==null?(S.dxy.toFixed(3)+(S.dxyManual!==null?' ✎':'')):'รอ API';
   const de=document.getElementById('dC');
-  de.textContent=`${dC>=0?'▲':'▼'} ${Math.abs(dC).toFixed(3)} (${Math.abs(dP).toFixed(2)}%)`;
+  de.textContent=S.dxy!==null?`${dC>=0?'▲':'▼'} ${Math.abs(dC).toFixed(3)} (${Math.abs(dP).toFixed(2)}%)`:'--';
   de.className='pc2 '+(dC>=0?'up':'dn');
   document.getElementById('dT').textContent='🟢 '+now;
   spk('sk1',S.goldSpk,'#f5c842'); spk('sk2',S.dxySpk,'#00e5ff');
@@ -766,32 +952,39 @@ function render(){
     <div class="sbt"><div class="sbf" style="width:${b.v/b.max*100}%;background:${b.c}"></div></div>
     <div class="sbv" style="color:${b.c}">${b.v}</div></div>`).join('');
 
-  // Signal banner
+  // Signal banner — Merged: SMC Pivot-9 primary + legacy score weight
   const m=MODES[S.mode], sb=document.getElementById('sigB');
-  if(r.tot>=m.minScore){
+  const smc2 = (typeof computeSMC==='function') ? computeSMC() : null;
+  // ใช้ SMC signal เป็นหลัก ถ้ามี; ไม่งั้นใช้ legacy
+  const mergedSignal = smc2 && smc2.signal!=='WAIT' ? smc2.signal : r.side;
+  const mergedScore  = smc2 ? Math.round((r.tot + smc2.confidence)/2) : r.tot;
+  const mergedOk     = smc2 ? (smc2.confidence>=80 && r.tot>=m.minScore) : r.tot>=m.minScore;
+  if(mergedOk && mergedSignal!=='WAIT'){
     sb.classList.add('show');
-    sb.className=`sig show ${r.side==='SELL'?'sell':r.side==='BUY'?'buy':'wait'}`;
-    document.getElementById('sigT').textContent=r.side==='SELL'?'🔴 SELL SIGNAL':r.side==='BUY'?'🟢 BUY SIGNAL':'⚡ MONITOR';
-    document.getElementById('sigS').textContent=`${r.tot}/100 · ${m.label} · R:R ${r.rr.toFixed(1)} · LIVE`;
-    document.getElementById('sigN').textContent=r.tot;
+    sb.className=`sig show ${mergedSignal==='SELL'?'sell':mergedSignal==='BUY'?'buy':'wait'}`;
+    document.getElementById('sigT').textContent=mergedSignal==='SELL'?'🔴 SELL SIGNAL':mergedSignal==='BUY'?'🟢 BUY SIGNAL':'⚡ MONITOR';
+    document.getElementById('sigS').textContent=`${mergedScore}/100 · ${m.label} · R:R ${r.rr.toFixed(1)} · MERGED`;
+    document.getElementById('sigN').textContent=mergedScore;
     if(S.alarmOn) alarm();
   } else sb.classList.remove('show');
 
   // Conditions
   document.getElementById('cList').innerHTML=[
     {name:'SMC — BOS',ico:r.bos?'✅':'❌',cls:r.bos?'pass':'fail',
-      desc:'ราคาต้องทะลุต่ำกว่า Swing Low ล่าสุด',val:`Gold ${r.g.toFixed(2)} ${r.bos?'✓ BOS':'✗ NO BOS'}`},
+      desc:r.bosDesc||'Break of Structure จาก Pivot-9',
+      val:`Trend:${r.trend} ${r.bosBull?'↑ Bull BOS':r.bosBear?'↓ Bear BOS':'NO BOS'}`},
     {name:'SMC — CHoCH',ico:r.choch?'✅':'⚠️',cls:r.choch?'pass':'warn',
-      desc:'ราคาปิดต่ำกว่าแท่งก่อนหน้า',val:r.choch?'✓ Confirmed':'⚠️ Pending'},
-    {name:'Fibonacci Kill Zone',ico:r.inKZ?'✅':'⚠️',cls:r.inKZ?'pass':'warn',
-      desc:`H=${r.fH.toFixed(0)} L=${r.fL.toFixed(0)} | 78.6%=${r.f786.toFixed(0)}`,
-      val:`${r.g.toFixed(2)} ${r.inKZ?'✓ IN ZONE':'OUT OF ZONE'}`},
+      desc:r.chochDesc||'Change of Character',
+      val:r.choch?(r.chochBull?'↑ Bull CHoCH':'↓ Bear CHoCH'):'⚠️ Pending'},
+    {name:'Golden Zone 61.8%–78.6%',ico:r.inKZ?'✅':'⚠️',cls:r.inKZ?'pass':'warn',
+      desc:`Fib H=${r.fH.toFixed(0)} L=${r.fL.toFixed(0)} | Zone: ${r.goldenLow.toFixed(0)}–${r.goldenHigh.toFixed(0)}`,
+      val:`${r.g.toFixed(2)} ${r.inKZ?'✓ IN GOLDEN ZONE':'OUT OF ZONE'}`},
     {name:'DXY Correlation',ico:r.al?'✅':'⚠️',cls:r.al?'pass':'warn',
-      desc:'DXY Bullish + Gold Bearish = ทำงานถูกต้อง',
-      val:`DXY ${r.d.toFixed(3)} (${r.dB?'BULL':'WEAK'}) ↔ Gold (${r.gBr?'BEAR ✓':'HIGH'})`},
-    {name:'DXY Supply Zone',ico:(r.d>=99.2&&r.d<=100.5)?'⚠️':'✅',cls:(r.d>=99.2&&r.d<=100.5)?'warn':'pass',
+      desc:r.alSell?'DXY Bull + Gold Bear = SELL aligned':r.alBuy?'DXY Weak + Gold Bull = BUY aligned':'DXY ไม่ aligned',
+      val:r.d!==null?`DXY ${r.d.toFixed(3)} ${r.dB?'BULL':r.dWeak?'WEAK':'NEUTRAL'}`:'รอ DXY API...'},
+    {name:'DXY Supply Zone',ico:(r.d!==null&&r.d>=99.2&&r.d<=100.5)?'⚠️':'✅',cls:(r.d!==null&&r.d>=99.2&&r.d<=100.5)?'warn':'pass',
       desc:'DXY 99.2–100.5 = Supply → Gold อาจ Bounce',
-      val:`DXY ${r.d.toFixed(3)} ${(r.d>=99.2&&r.d<=100.5)?'⚠️ CAUTION':'✓ CLEAR'}`},
+      val:r.d!==null?`DXY ${r.d.toFixed(3)} ${(r.d>=99.2&&r.d<=100.5)?'⚠️ CAUTION':'✓ CLEAR'}`:'--'},
     {name:`Session — ${r.se.name}`,ico:r.se.ok?'✅':'⚠️',cls:r.se.ok?'pass':'warn',
       desc:'London/NY = High Vol | Tokyo = Low',val:`${r.se.name} | ${r.se.pts}/20pts | ${r.se.ok?'✓ ACTIVE':'⚠️ Low'}`},
     {name:`Score Gate ≥ ${m.minScore}pts`,ico:r.tot>=m.minScore?'✅':'❌',cls:r.tot>=m.minScore?'pass':'fail',
@@ -803,24 +996,24 @@ function render(){
   // Decision tree
   document.getElementById('dTree').innerHTML=`
 <div class="dn4 dnt">📌 MODE:${m.label} MIN:${m.minScore}pts R:R≥${m.rrMin} 🟢 LIVE</div>
+<div class="dn4 di">TREND (Pivot-9): <b style="color:${r.trend==='UPTREND'?'var(--green)':r.trend==='DOWNTREND'?'var(--red)':'var(--gold)'}">${r.trend}</b></div>
 <div class="dn4 di">IF score≥${m.minScore} → ${r.tot>=m.minScore?'<span style="color:var(--green)">✓PASS</span>':'<span style="color:var(--red)">✗FAIL→WAIT</span>'}</div>
-<div class="dn4 di" style="margin-left:10px">IF DXY Bull AND Gold Bear → ${r.al?'<span style="color:var(--green)">✓ALIGNED</span>':'<span style="color:var(--red)">✗MIXED</span>'}</div>
+<div class="dn4 di" style="margin-left:10px">BOS ${r.bos?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--red)">✗</span>'} CHoCH ${r.choch?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--gold)">⚠️</span>'} Golden Zone ${r.inKZ?'<span style="color:var(--green)">✓IN</span>':'<span style="color:var(--gold)">⚠️OUT</span>'}</div>
+<div class="dn4 di" style="margin-left:10px">DXY ${r.d!==null?r.d.toFixed(3):'รอ API'} ${r.alSell?'<span style="color:var(--red)">→ SELL aligned</span>':r.alBuy?'<span style="color:var(--green)">→ BUY aligned</span>':'<span style="color:var(--gold)">⚠️ MIXED</span>'}</div>
 <div class="dn4 dth">→ SIDE=<b>${r.side}</b></div>
-<div class="dn4 di" style="margin-left:10px">IF DXY Supply → ${(r.d>=99.2&&r.d<=100.5)?'<span style="color:var(--orange)">⚠️CAUTION</span>':'<span style="color:var(--green)">✓CLEAR</span>'}</div>
-<div class="dn4 di" style="margin-left:10px">IF Fib KillZone → ${r.inKZ?'<span style="color:var(--green)">✓IN</span>':'<span style="color:var(--orange)">⚠️OUT</span>'}</div>
 <div class="dn4 di" style="margin-left:10px">IF R:R≥${m.rrMin} → ${r.rr>=m.rrMin?'<span style="color:var(--green)">✓VALID</span>':'<span style="color:var(--red)">✗LOW</span>'}</div>
 <div class="dn4 dth">→ FINAL:<b>${r.tot>=m.minScore&&r.rr>=m.rrMin?r.side:'WAIT'}</b></div>
-<div class="dn4 dnt" style="margin-top:4px">📡 Fetch#${S.fetchN} · ${S.lastFetch?.toLocaleTimeString('th-TH')||'--'} · goldapi.io + Yahoo Finance DXY</div>`;
+<div class="dn4 dnt" style="margin-top:4px">📡 Fetch#${S.fetchN} · ${S.lastFetch?.toLocaleTimeString('th-TH')||'--'} · SMC Pivot-9 Unified Engine</div>`;
 
   // Formula
   document.getElementById('fBox').innerHTML=`
-<div style="color:var(--muted);margin-bottom:6px;font-size:8px">SCORE=SMC+FIB+DXY+SESSION 🟢 LIVE</div>
-<div class="fl"><span style="color:var(--muted)">SMC max=${w.smc}</span><span class="fp go">${r.sc.smc}pts</span></div>
-<div class="fl"><span style="color:var(--muted)">FIB max=${w.fib}</span><span class="fp pu">${r.sc.fib}pts</span></div>
-<div class="fl"><span style="color:var(--muted)">DXY CORR max=${w.corr}</span><span class="fp cy">${r.sc.corr}pts</span></div>
+<div style="color:var(--muted);margin-bottom:6px;font-size:8px">UNIFIED ENGINE: SMC Pivot-9 (primary) + Score weight 🟢 LIVE</div>
+<div class="fl"><span style="color:var(--muted)">SMC max=${w.smc} [Pivot-9 BOS/CHoCH]</span><span class="fp go">${r.sc.smc}pts</span></div>
+<div class="fl"><span style="color:var(--muted)">FIB max=${w.fib} [Golden Zone 61.8%–78.6%]</span><span class="fp pu">${r.sc.fib}pts</span></div>
+<div class="fl"><span style="color:var(--muted)">DXY CORR max=${w.corr} [Symmetric SELL/BUY]</span><span class="fp cy">${r.sc.corr}pts</span></div>
 <div class="fl"><span style="color:var(--muted)">SESSION(${r.se.name}) max=${w.vol}</span><span class="fp gr">${r.sc.vol}pts</span></div>
 <div class="fl tot"><span style="color:var(--text)">TOTAL</span><span class="fp big go">${r.tot}/100</span></div>
-<div style="margin-top:6px;font-size:8px;color:var(--muted)">SL=${m.slPct}% TP1=${m.tp1Pct}% TP2=${m.tp2Pct}% จาก Entry</div>`;
+<div style="margin-top:6px;font-size:8px;color:var(--muted)">SL = SMC swing level (${r.side==='SELL'?'เหนือ High':'ใต้ Low'}) | fallback ${m.slPct}% จาก Entry<br>TP1=${m.tp1Pct}% TP2=${m.tp2Pct}% · SCALP ≥80pts</div>`;
 
   // Zones
   document.getElementById('zR').textContent=r.zR;
@@ -842,24 +1035,24 @@ function render(){
   document.getElementById('rrV').style.color=v?'var(--green)':'var(--red)';
 
   // Filters
-  const dZ=(r.d>=99.2&&r.d<=100.5);
+  const dZ=(r.d!==null&&r.d>=99.2&&r.d<=100.5);
   document.getElementById('fGrid').innerHTML=`
 <div class="fi"><div class="fil">DATA</div><div class="fiv ok">LIVE✓</div>
   <div class="fin">Fetch #${S.fetchN}</div></div>
 <div class="fi"><div class="fil">SESSION</div><div class="fiv" style="color:${r.se.col}">${r.se.name}</div>
   <div class="fin">${r.se.ok?'High Vol✓':'Low Vol'}</div></div>
-<div class="fi"><div class="fil">DXY ZONE</div><div class="fiv ${dZ?'warn':'ok'}">${dZ?'SUPPLY':'CLEAR'}</div>
-  <div class="fin">${dZ?'⚠️99.2–100.5':'นอก Supply'}</div></div>
+<div class="fi"><div class="fil">DXY ZONE</div><div class="fiv ${r.d===null?'warn':dZ?'warn':'ok'}">${r.d===null?'WAIT':dZ?'SUPPLY':'CLEAR'}</div>
+  <div class="fin">${r.d===null?'รอ API...':dZ?'⚠️99.2–100.5':'นอก Supply'}</div></div>
 <div class="fi"><div class="fil">BOS</div><div class="fiv ${r.bos?'ok':'bad'}">${r.bos?'BOS✓':'NO BOS'}</div>
-  <div class="fin">${r.bos?'Confirmed':'ยังไม่เกิด'}</div></div>`;
+  <div class="fin">${r.bos?(r.bosBull?'↑ Bull':'↓ Bear'):'ยังไม่เกิด'}</div></div>`;
 
   // Log
   const now2=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   const logs=[
-    `<span class="gr">LIVE</span> Gold=<span class="g">${r.g.toFixed(2)}</span> DXY=<span class="c">${r.d.toFixed(3)}</span> Score:<span class="g">${r.tot}/100</span> → <span class="${r.side==='SELL'?'r':'gr'}">${r.side}</span>`,
-    `SMC: BOS ${r.bos?'<span class="gr">✓</span>':'<span class="r">✗</span>'} CHoCH ${r.choch?'<span class="gr">✓</span>':'<span class="g">⚠️</span>'} ${r.sc.smc}/${w.smc}pts`,
-    `Fib: H=${r.fH.toFixed(0)} L=${r.fL.toFixed(0)} 78.6%=${r.f786.toFixed(0)} ${r.inKZ?'<span class="gr">IN ZONE✓</span>':'<span class="g">OUT</span>'}`,
-    `DXY ${r.d.toFixed(3)} ${r.dB?'<span class="gr">BULL</span>':'<span class="r">WEAK</span>'} ↔ Gold ${r.gBr?'<span class="r">BEAR</span>':'<span class="gr">BULL</span>'} ${r.al?'<span class="gr">ALIGNED✓</span>':'<span class="g">MIXED'}`,
+    `<span class="gr">LIVE</span> Gold=<span class="g">${r.g.toFixed(2)}</span> DXY=<span class="c">${r.d!==null?r.d.toFixed(3):'รอ API'}</span> Score:<span class="g">${r.tot}/100</span> → <span class="${r.side==='SELL'?'r':r.side==='BUY'?'gr':'g'}">${r.side}</span>`,
+    `SMC: Trend <span class="${r.trend==='UPTREND'?'gr':r.trend==='DOWNTREND'?'r':'g'}">${r.trend}</span> BOS ${r.bos?'<span class="gr">✓</span>':'<span class="r">✗</span>'} CHoCH ${r.choch?'<span class="gr">✓</span>':'<span class="g">⚠️</span>'} ${r.sc.smc}/${w.smc}pts`,
+    `Fib: H=${r.fH.toFixed(0)} L=${r.fL.toFixed(0)} Golden=${r.goldenLow.toFixed(0)}–${r.goldenHigh.toFixed(0)} ${r.inKZ?'<span class="gr">IN ZONE✓</span>':'<span class="g">OUT</span>'}`,
+    `DXY ${r.d!==null?r.d.toFixed(3):'--'} ${r.dB?'<span class="gr">BULL</span>':r.dWeak?'<span class="gr">WEAK(BUY)</span>':'<span class="g">NEUTRAL</span>'} ${r.alSell?'<span class="r">→SELL✓</span>':r.alBuy?'<span class="gr">→BUY✓</span>':'<span class="g">MIXED'}`,
     `R:R=<span class="g">1:${r.rr.toFixed(1)}</span> SL=${r.sl.toFixed(0)} TP1=${r.tp1.toFixed(0)} TP2=${r.tp2.toFixed(0)}`,
   ];
   document.getElementById('logW').innerHTML=logs.map(l=>`<div class="le"><div class="let">${now2}</div><div class="lem">${l}</div></div>`).join('');
@@ -1311,7 +1504,7 @@ const MAX_RECORDS = 50;
 
 function recordAlert(signal, confidence, entry, sl, tp1, tp2, rr, reason) {
   const now = new Date();
-  ALERT_RECORDS.unshift({
+  const rec = {
     id: Date.now(),
     signal,
     confidence,
@@ -1324,17 +1517,77 @@ function recordAlert(signal, confidence, entry, sl, tp1, tp2, rr, reason) {
     time: now.toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),
     date: now.toLocaleDateString('th-TH', {day:'2-digit',month:'2-digit',year:'2-digit'}),
     gold: (S.gold||0).toFixed(2),
-    dxy: (S.dxy||0).toFixed(3),
+    dxy: (S.dxy!==null ? S.dxy : 0).toFixed(3),
     mode: S.mode.toUpperCase(),
-  });
+    outcome: null,
+  };
+  ALERT_RECORDS.unshift(rec);
   if (ALERT_RECORDS.length > MAX_RECORDS) ALERT_RECORDS.pop();
   renderAlertRecords();
+
+  // ── Auto-send to Google Sheets if webhook is set ──
+  if(WH.url && !WH.sending) {
+    const r = compute();
+    const payload = buildWebhookPayload(signal, confidence, {
+      entry: rec.entry, sl: rec.sl, tp1: rec.tp1, tp2: rec.tp2, rr: rec.rr,
+      gold: rec.gold, dxy: rec.dxy, mode: rec.mode,
+      trend: r ? r.trend : '',
+      zone: r ? (r.inKZ ? `Golden ${r.goldenLow.toFixed(0)}–${r.goldenHigh.toFixed(0)}` : 'OUT') : '',
+      reason,
+    });
+    sendToSheets(payload, false);
+  }
+}
+
+function setOutcome(id, outcome) {
+  const rec = ALERT_RECORDS.find(r => r.id === id);
+  if (!rec) return;
+  rec.outcome = rec.outcome === outcome ? null : outcome; // toggle
+  renderAlertRecords();
+
+  // Send outcome update to Sheets (separate row tagged as OUTCOME_UPDATE)
+  if(WH.url && rec.outcome !== null) {
+    const payload = buildWebhookPayload('OUTCOME_UPDATE', rec.confidence, {
+      entry: rec.entry, sl: rec.sl, tp1: rec.tp1, tp2: rec.tp2, rr: rec.rr,
+      gold: rec.gold, dxy: rec.dxy, mode: rec.mode,
+      trend: '', zone: '',
+      reason: `OUTCOME: ${rec.outcome} ← original signal ${rec.signal} @ ${rec.date} ${rec.time}`,
+    });
+    // Override signal field to show outcome clearly
+    payload.signal = rec.outcome === 'WIN' ? '✅WIN' : '❌FAIL';
+    sendToSheets(payload, false);
+  }
+}
+
+function calcWinrate() {
+  const decided = ALERT_RECORDS.filter(r => r.outcome !== null);
+  const wins    = ALERT_RECORDS.filter(r => r.outcome === 'WIN').length;
+  const fails   = ALERT_RECORDS.filter(r => r.outcome === 'FAIL').length;
+  const pending = ALERT_RECORDS.filter(r => r.outcome === null).length;
+  const pct     = decided.length ? Math.round(wins/decided.length*100) : null;
+  return {wins, fails, pending, total: ALERT_RECORDS.length, pct};
 }
 
 function renderAlertRecords() {
   const list = document.getElementById('recList');
   const lbl  = document.getElementById('recCountLbl');
   lbl.textContent = ALERT_RECORDS.length + ' รายการ';
+
+  // Winrate bar
+  const wr = calcWinrate();
+  const wrBar = document.getElementById('winrateBar');
+  if (ALERT_RECORDS.length > 0) {
+    wrBar.style.display = 'flex';
+    document.getElementById('winrateNum').textContent = wr.pct !== null ? wr.pct+'%' : '--%';
+    document.getElementById('winrateNum').style.color = wr.pct === null ? 'var(--muted)' : wr.pct>=60?'var(--green)':wr.pct>=40?'var(--gold)':'var(--red)';
+    document.getElementById('winrateBar2').style.width = (wr.pct||0)+'%';
+    document.getElementById('winCount').textContent  = wr.wins+'W';
+    document.getElementById('failCount').textContent = wr.fails+'F';
+    document.getElementById('pendCount').textContent = wr.pending+'P';
+  } else {
+    wrBar.style.display = 'none';
+  }
+
   if (!ALERT_RECORDS.length) {
     list.innerHTML = '<div class="rec-empty">ยังไม่มีการแจ้งเตือน<br>เปิด ALARM แล้วรอสัญญาณ</div>';
     return;
@@ -1344,6 +1597,7 @@ function renderAlertRecords() {
   <div class="rec-top">
     <span class="rec-sig">${r.signal==='SELL'?'🔴':r.signal==='BUY'?'🟢':'⚡'} ${r.signal}</span>
     <span class="rec-conf">${r.confidence}/100</span>
+    ${r.outcome ? `<span class="rec-outcome-badge ${r.outcome.toLowerCase()}">${r.outcome==='WIN'?'✅ WIN':'❌ FAIL'}</span>` : '<span class="rec-outcome-badge" style="color:var(--muted);border-color:transparent">⏳ PENDING</span>'}
     <span class="rec-time">${r.date} ${r.time} · ${r.mode}</span>
   </div>
   <div class="rec-body">
@@ -1356,7 +1610,39 @@ function renderAlertRecords() {
     <div class="rec-kv"><span class="rec-k">R:R</span><span class="rec-v">1:${r.rr}</span></div>
   </div>
   <div class="rec-reason">${r.reason}</div>
+  <div class="rec-outcome">
+    <button class="rec-btn-win ${r.outcome==='WIN'?'active':''}" onclick="setOutcome(${r.id},'WIN')">✅ WIN</button>
+    <button class="rec-btn-fail ${r.outcome==='FAIL'?'active':''}" onclick="setOutcome(${r.id},'FAIL')">❌ FAIL</button>
+  </div>
 </div>`).join('') + '</div>';
+}
+
+// ── Export to Google Sheets (CSV download + Sheets URL) ─────────────────
+function exportToSheets() {
+  if (!ALERT_RECORDS.length) { showToast('⚠️ ไม่มีข้อมูลให้ส่งออก'); return; }
+  const wr = calcWinrate();
+  const header = ['Date','Time','Mode','Signal','Confidence','Gold','DXY','Entry','SL','TP1','TP2','R:R','Outcome','Reason'];
+  const rows = ALERT_RECORDS.map(r => [
+    r.date, r.time, r.mode, r.signal, r.confidence,
+    r.gold, r.dxy, r.entry, r.sl, r.tp1, r.tp2, r.rr,
+    r.outcome||'PENDING', `"${(r.reason||'').replace(/"/g,'""')}"`
+  ]);
+  // Summary row
+  rows.push([]);
+  rows.push(['SUMMARY','','','Wins: '+wr.wins,'Fails: '+wr.fails,'Pending: '+wr.pending,'','','','','','','Win Rate: '+(wr.pct!==null?wr.pct+'%':'N/A'),'']);
+
+  const csv = [header, ...rows].map(r => r.join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `gold_sentinel_records_${new Date().toLocaleDateString('th-TH').replace(/\//g,'-')}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  // Also open Google Sheets import hint
+  setTimeout(()=> {
+    showToast(`✅ CSV บันทึกแล้ว · Import ใน Google Sheets`);
+  }, 500);
 }
 
 function clearAlertRecords() {
@@ -1715,9 +2001,12 @@ window.alarm = function alarmWithRecord() {
   const smc = computeSMC();
   if(!r) return;
   const now = Date.now();
+  // Merged signal
+  const mergedSignal = smc && smc.signal!=='WAIT' ? smc.signal : r.side;
+  if(mergedSignal==='WAIT') return;
   // Throttle: ไม่บันทึกซ้ำภายใน 60 วินาที
-  if(now - _lastAlarmTime < 60000 && _lastAlarmSignal === r.side) return;
-  _lastAlarmSignal = r.side;
+  if(now - _lastAlarmTime < 60000 && _lastAlarmSignal === mergedSignal) return;
+  _lastAlarmSignal = mergedSignal;
   _lastAlarmTime = now;
 
   const smcScore = smc ? smc.confidence : 0;
@@ -1726,14 +2015,15 @@ window.alarm = function alarmWithRecord() {
     `Mode: ${MODES[S.mode].label}`,
     `Score: ${r.tot}/100`,
     smc ? `SMC: ${smc.confidence}/100` : '',
+    `Trend: ${r.trend}`,
     `BOS: ${r.bos?'✓':'✗'}`,
     `CHoCH: ${r.choch?'✓':'✗'}`,
     smc?.liq?.sweep ? `Sweep: ${smc.liq.type}` : '',
-    `Fib: ${r.inKZ?'IN KZ':'OUT'}`,
+    `GoldenZone: ${r.inKZ?'IN':'OUT'}`,
     `Session: ${r.se.name}`,
   ].filter(Boolean).join(' · ');
 
-  recordAlert(r.side, combinedConf, r.entry, r.sl, r.tp1, r.tp2, r.rr, reason);
+  recordAlert(mergedSignal, combinedConf, r.entry, r.sl, r.tp1, r.tp2, r.rr, reason);
 };
 
 // ── SMC renders via render() hook above ───────────────
@@ -1768,6 +2058,180 @@ window.alarm = function alarmWithRecord() {
   });
   cv.addEventListener('mouseleave',()=>{if(window._lastR)drawChart(window._lastR)});
 })();
+
+// ═══════════════════════════════════════════════════════
+// GOOGLE SHEETS WEBHOOK SYSTEM
+// ═══════════════════════════════════════════════════════
+
+const WH_DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbxkNYPKwsqATb-SCoPfpVtsHTNpI_DSGtQ_8j7fWtfqmA_C6zaI-N7EbBiYh0M3Zu4/exec';
+const WH = {
+  url: localStorage.getItem('wh_url') || WH_DEFAULT_URL,
+  log: [],
+  maxLog: 20,
+  sending: false,
+};
+
+// ── Init on load ──────────────────────────────────────
+(function whInit(){
+  document.getElementById('whUrlInp').value = WH.url;
+  document.getElementById('whTestBtn').disabled = false;
+  setWhStatus('on', '✅ พร้อมส่ง — webhook ฝังแล้ว');
+})();
+
+function onWhUrlChange(){
+  const v = document.getElementById('whUrlInp').value.trim();
+  if(!v) { setWhStatus('off','วาง Webhook URL แล้วกด SAVE'); document.getElementById('whTestBtn').disabled=true; }
+  else   { setWhStatus('off','กด SAVE เพื่อบันทึก'); }
+}
+
+function unlockWhUrl(){
+  const inp = document.getElementById('whUrlInp');
+  inp.removeAttribute('readonly');
+  inp.style.opacity = '1';
+  inp.style.cursor = 'text';
+  inp.focus();
+  inp.select();
+  setWhStatus('off','แก้ไข URL แล้วกด SAVE');
+  showToast('✎ แก้ไข URL ได้แล้ว');
+}
+
+function saveWebhook(){
+  const v = document.getElementById('whUrlInp').value.trim();
+  if(!v || !v.startsWith('https://')) { showToast('⚠️ URL ต้องขึ้นต้นด้วย https://'); return; }
+  WH.url = v;
+  localStorage.setItem('wh_url', v);
+  // Re-lock input
+  const inp = document.getElementById('whUrlInp');
+  inp.setAttribute('readonly','');
+  inp.style.opacity = '0.7';
+  inp.style.cursor = 'default';
+  setWhStatus('on', '✅ บันทึกแล้ว — กด TEST เพื่อทดสอบ');
+  document.getElementById('whTestBtn').disabled = false;
+  showToast('✅ Webhook URL บันทึกแล้ว');
+}
+
+function clearWebhook(){
+  WH.url = WH_DEFAULT_URL;
+  localStorage.removeItem('wh_url');
+  document.getElementById('whUrlInp').value = WH_DEFAULT_URL;
+  document.getElementById('whTestBtn').disabled = false;
+  setWhStatus('on','✅ รีเซ็ตเป็น URL เริ่มต้นแล้ว');
+  showToast('🔄 รีเซ็ต Webhook เป็นค่าเริ่มต้น');
+}
+
+function setWhStatus(state, msg){
+  const dot = document.getElementById('whDot');
+  const txt = document.getElementById('whStatusTxt');
+  const lbl = document.getElementById('whStatusLabel');
+  dot.className = 'wh-dot ' + (state==='on'?'on':state==='err'?'err':state==='sending'?'sending':'');
+  txt.textContent = msg;
+  txt.style.color = state==='on'?'var(--green)':state==='err'?'var(--red)':state==='sending'?'var(--gold)':'var(--muted)';
+  lbl.textContent = state==='on'?'เชื่อมต่อแล้ว':state==='err'?'ส่งไม่ได้':state==='sending'?'กำลังส่ง...':'ยังไม่ตั้งค่า';
+  lbl.style.color = state==='on'?'var(--green)':state==='err'?'var(--red)':state==='sending'?'var(--gold)':'var(--muted)';
+}
+
+// ── Core send function ────────────────────────────────
+async function sendToSheets(payload, isTest=false) {
+  if(!WH.url) return;
+  WH.sending = true;
+  setWhStatus('sending', isTest ? '🔄 ส่ง TEST...' : '🔄 ส่ง signal...');
+
+  const logEl = document.getElementById('whLog');
+  logEl.style.display = 'block';
+
+  const ts = new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  addWhLog('send', `${ts} → ส่ง ${isTest?'TEST':payload.signal} (${payload.confidence}/100)...`);
+
+  try {
+    // Apps Script doPost — ต้องใช้ no-cors mode เพราะ GAS ไม่ส่ง CORS header เสมอ
+    // mode: 'no-cors' = ส่งสำเร็จแต่อ่าน response ไม่ได้ → treat as success
+    const ctrl = new AbortController();
+    const timer = setTimeout(()=>ctrl.abort(), 12000);
+
+    let ok = false, msg = '';
+    try {
+      const res = await fetch(WH.url, {
+        method: 'POST',
+        mode: 'no-cors',           // GAS requires no-cors for external callers
+        headers: {'Content-Type': 'text/plain'},
+        body: JSON.stringify(payload),
+        signal: ctrl.signal,
+      });
+      clearTimeout(timer);
+      // no-cors → res.type === 'opaque' → ถือว่าสำเร็จ
+      ok = true;
+      msg = isTest ? 'TEST ส่งแล้ว ✅ (ตรวจสอบใน Google Sheet)' : `${payload.signal} บันทึกแล้ว ✅`;
+    } catch(fetchErr) {
+      clearTimeout(timer);
+      throw fetchErr;
+    }
+
+    setWhStatus('on', msg);
+    addWhLog('ok', `${ts} ✅ ${msg}`);
+    if(!isTest) showToast(`📊 Sheet: ${payload.signal} บันทึกแล้ว`);
+
+  } catch(e) {
+    const errMsg = e.name==='AbortError' ? 'Timeout (12s)' : e.message.substring(0,50);
+    setWhStatus('err', '❌ ส่งไม่ได้: ' + errMsg);
+    addWhLog('err', `${ts} ❌ ${errMsg}`);
+    if(!isTest) showToast('⚠️ Webhook error: ' + errMsg.substring(0,25));
+  } finally {
+    WH.sending = false;
+  }
+}
+
+function addWhLog(type, msg) {
+  WH.log.unshift({type, msg});
+  if(WH.log.length > WH.maxLog) WH.log.pop();
+  const el = document.getElementById('whLog');
+  el.innerHTML = WH.log.map(l =>
+    `<div class="wh-log-item ${l.type}">${l.msg}</div>`
+  ).join('');
+}
+
+// ── Test webhook ──────────────────────────────────────
+function testWebhook() {
+  if(!WH.url) { showToast('⚠️ ยังไม่มี Webhook URL'); return; }
+  const payload = buildWebhookPayload('TEST', 99, {
+    entry:'TEST', sl:'TEST', tp1:'TEST', tp2:'TEST', rr:'1.0',
+    trend:'TEST', zone:'TEST', reason:'Gold Sentinel — Test ping',
+    gold: (S.gold||0).toFixed(2), dxy: (S.dxy!==null?S.dxy:0).toFixed(3),
+    mode: S.mode.toUpperCase(),
+  });
+  sendToSheets(payload, true);
+}
+
+// ── Build payload ─────────────────────────────────────
+function buildWebhookPayload(signal, confidence, extra) {
+  const now = new Date();
+  return {
+    date:  now.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'2-digit'}),
+    time:  now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),
+    mode:  extra.mode  || S.mode.toUpperCase(),
+    signal,
+    confidence,
+    gold:  extra.gold  || (S.gold||0).toFixed(2),
+    dxy:   extra.dxy   || (S.dxy!==null?S.dxy.toFixed(3):'N/A'),
+    entry: extra.entry || '',
+    sl:    extra.sl    || '',
+    tp1:   extra.tp1   || '',
+    tp2:   extra.tp2   || '',
+    rr:    extra.rr    || '',
+    trend: extra.trend || '',
+    zone:  extra.zone  || '',
+    reason: extra.reason || '',
+  };
+}
+
+// ── Copy GAS code helper ──────────────────────────────
+function copyGASCode(){
+  const code = document.getElementById('gasCodeBlock').textContent;
+  navigator.clipboard.writeText(code).then(()=>{
+    showToast('📋 Copy Code แล้ว — วางใน Apps Script');
+  }).catch(()=>{
+    showToast('⚠️ Copy ไม่ได้ — เลือก text แล้ว copy เอง');
+  });
+}
 </script>
 </body>
 </html>
