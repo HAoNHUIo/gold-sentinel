@@ -2130,54 +2130,55 @@ function setWhStatus(state, msg){
   lbl.style.color = state==='on'?'var(--green)':state==='err'?'var(--red)':state==='sending'?'var(--gold)':'var(--muted)';
 }
 
-// ── Core send function ────────────────────────────────
+// ── Core send function (FINAL FIX) ─────────────────────
 async function sendToSheets(payload, isTest=false) {
   if(!WH.url) return;
+
   WH.sending = true;
   setWhStatus('sending', isTest ? '🔄 ส่ง TEST...' : '🔄 ส่ง signal...');
 
-  const logEl = document.getElementById('whLog');
-  logEl.style.display = 'block';
+  const ts = new Date().toLocaleTimeString('th-TH',{
+    hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false
+  });
 
-  const ts = new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
   addWhLog('send', `${ts} → ส่ง ${isTest?'TEST':payload.signal} (${payload.confidence}/100)...`);
 
   try {
-    // Apps Script doPost — ต้องใช้ no-cors mode เพราะ GAS ไม่ส่ง CORS header เสมอ
-    // mode: 'no-cors' = ส่งสำเร็จแต่อ่าน response ไม่ได้ → treat as success
     const ctrl = new AbortController();
-    const timer = setTimeout(()=>ctrl.abort(), 12000);
+    const timer = setTimeout(()=>ctrl.abort(), 8000);
 
-    let ok = false, msg = '';
-    try {
-      const res = await fetch(WH.url, {
-        method: 'POST',
-        mode: 'no-cors',           // GAS requires no-cors for external callers
-        headers: {'Content-Type': 'text/plain'},
-        body: JSON.stringify(payload),
-        signal: ctrl.signal,
-      });
-      clearTimeout(timer);
-      // no-cors → res.type === 'opaque' → ถือว่าสำเร็จ
-      ok = true;
-      msg = isTest ? 'TEST ส่งแล้ว ✅ (ตรวจสอบใน Google Sheet)' : `${payload.signal} บันทึกแล้ว ✅`;
-    } catch(fetchErr) {
-      clearTimeout(timer);
-      throw fetchErr;
-    }
+    await fetch(WH.url, {
+      method: 'POST',
+      mode: 'no-cors',  // ✅ ต้องใช้
+      headers: {
+        'Content-Type': 'text/plain' // ✅ ห้ามใช้ json ใน no-cors
+      },
+      body: JSON.stringify(payload),
+      signal: ctrl.signal
+    });
+
+    clearTimeout(timer);
+
+    // ⭐ treat success เลย (เพราะอ่าน response ไม่ได้)
+    const msg = isTest
+      ? 'TEST ส่งแล้ว ✅ (เช็คใน Sheet)'
+      : `${payload.signal} บันทึกแล้ว ✅`;
 
     setWhStatus('on', msg);
     addWhLog('ok', `${ts} ✅ ${msg}`);
+
     if(!isTest) showToast(`📊 Sheet: ${payload.signal} บันทึกแล้ว`);
 
   } catch(e) {
-    const errMsg = e.name==='AbortError' ? 'Timeout (12s)' : e.message.substring(0,50);
-    setWhStatus('err', '❌ ส่งไม่ได้: ' + errMsg);
+    const errMsg = e.name==='AbortError'
+      ? 'Timeout (8s)'
+      : e.message;
+
+    setWhStatus('err', '❌ ' + errMsg);
     addWhLog('err', `${ts} ❌ ${errMsg}`);
-    if(!isTest) showToast('⚠️ Webhook error: ' + errMsg.substring(0,25));
-  } finally {
-    WH.sending = false;
   }
+
+  WH.sending = false;
 }
 
 function addWhLog(type, msg) {
