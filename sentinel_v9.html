@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>AI Gold Sentinel v9</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=IBM+Plex+Mono:wght@300;400;600&family=Sarabun:wght@300;400;600;700&display=swap');
+:root{
+  --bg:#020609;--bg1:#08111f;--bg2:#0d1a2e;
+  --gold:#ffd44d;--gold2:#f5b800;--glow:rgba(255,212,77,.15);
+  --cyan:#18eeff;--green:#00ffaa;--red:#ff3355;--orange:#ff9500;--purple:#c97fff;
+  --text:#e8f4ff;--dim:#b0cce0;--muted:#7a9ab8;
+  --border:rgba(24,238,255,.13);--borderG:rgba(255,212,77,.22);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:'Sarabun',sans-serif;font-size:14px;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:linear-gradient(rgba(0,229,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.02) 1px,transparent 1px);background-size:32px 32px}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 60% 40% at 50% 0%,rgba(245,200,66,.06),transparent 70%)}
+.w{position:relative;z-index:1;max-width:460px;margin:0 auto;padding:10px;padding-bottom:40px}
+.tb{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:linear-gradient(135deg,rgba(255,212,77,.08),rgba(0,229,255,.04));border:1px solid var(--borderG);border-radius:14px;margin-bottom:9px}
+.bo{width:32px;height:32px;border-radius:50%;background:conic-gradient(from 0deg,var(--gold),var(--cyan),var(--gold));display:flex;align-items:center;justify-content:center;font-size:15px;animation:spin 6s linear infinite;box-shadow:0 0 12px var(--glow);flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.bn{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:var(--text)}.bn s{color:var(--gold)}
+.bv{font-size:10px;color:var(--muted);letter-spacing:2px;font-family:'IBM Plex Mono',monospace}
+.pill{display:inline-flex;align-items:center;gap:4px;border-radius:20px;padding:2px 8px;font-size:10px;letter-spacing:1px;font-family:'IBM Plex Mono',monospace}
+.pill.live{background:rgba(0,255,170,.08);border:1px solid rgba(0,255,170,.3);color:var(--green)}
+.pill.err{background:rgba(255,51,85,.1);border:1px solid rgba(255,51,85,.35);color:var(--red)}
+.pill.warn{background:rgba(255,149,0,.1);border:1px solid rgba(255,149,0,.3);color:var(--orange)}
+.dot{width:5px;height:5px;border-radius:50%;animation:blink 1s infinite}
+.live .dot{background:var(--green)}.err .dot{background:var(--red)}.warn .dot{background:var(--orange)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.ck{font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:2px}
+.sbar{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px;margin-bottom:9px;font-family:'IBM Plex Mono',monospace;font-size:11px}
+.sd{width:6px;height:6px;border-radius:50%;transition:background .3s;flex-shrink:0}
+.sd.ok{background:var(--green)}.sd.ld{background:var(--orange);animation:blink .5s infinite}.sd.er{background:var(--red)}
+.setup-card{background:rgba(255,212,77,.05);border:1px solid rgba(255,212,77,.25);border-radius:12px;padding:12px;margin-bottom:9px}
+.setup-title{font-size:11px;letter-spacing:2px;color:var(--gold);font-family:'IBM Plex Mono',monospace;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.setup-row{display:flex;gap:6px;margin-bottom:6px;align-items:center}
+.setup-inp{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(255,212,77,.3);border-radius:6px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:5px 9px;outline:none;min-width:0}
+.setup-inp:focus{border-color:var(--gold)}.setup-inp::placeholder{color:var(--muted)}
+.setup-btn{padding:5px 11px;border-radius:6px;border:1px solid rgba(255,212,77,.4);background:rgba(255,212,77,.12);color:var(--gold);font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;white-space:nowrap;font-weight:600}
+.setup-btn:active{background:rgba(255,212,77,.25)}
+.setup-note{font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;line-height:1.5}
+.setup-note a{color:var(--cyan);text-decoration:none}
+.key-ok{background:rgba(0,255,170,.1);color:var(--green);border:1px solid rgba(0,255,170,.25);font-size:10px;padding:2px 8px;border-radius:8px;font-family:'IBM Plex Mono',monospace}
+.key-no{background:rgba(255,51,85,.1);color:var(--red);border:1px solid rgba(255,51,85,.25);font-size:10px;padding:2px 8px;border-radius:8px;font-family:'IBM Plex Mono',monospace}
+.dxy-row{display:flex;align-items:center;gap:5px;padding:5px 10px;background:rgba(0,229,255,.04);border:1px solid rgba(0,229,255,.15);border-radius:8px;margin-bottom:9px;font-family:'IBM Plex Mono',monospace;font-size:11px;flex-wrap:wrap}
+.dxy-inp{background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.25);border-radius:5px;color:var(--cyan);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 7px;width:68px;outline:none;text-align:right}
+.dxy-btn{padding:3px 8px;border-radius:5px;border:1px solid rgba(0,229,255,.3);background:rgba(0,229,255,.1);color:var(--cyan);font-family:'IBM Plex Mono',monospace;font-size:10px;cursor:pointer}
+.dxy-auto{color:var(--muted);font-size:10px;cursor:pointer;text-decoration:underline}
+.card{background:var(--bg1);border:1px solid var(--border);border-radius:13px;padding:12px;margin-bottom:9px}
+.ct{font-size:11px;letter-spacing:2px;color:var(--dim);font-family:'IBM Plex Mono',monospace;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;font-weight:600}
+.ct span{color:var(--cyan)}
+.sec{font-size:10px;letter-spacing:3px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:6px;padding-left:2px;font-weight:600}
+.mbar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:9px}
+.mb{padding:8px 5px;border-radius:10px;border:1px solid var(--border);background:var(--bg1);cursor:pointer;text-align:center;transition:all .25s}
+.mb:active{transform:scale(.97)}
+.mb.ms{border-color:var(--purple);background:rgba(201,127,255,.1)}
+.mb.mw{border-color:var(--gold);background:rgba(255,212,77,.08)}
+.mb.mp{border-color:var(--cyan);background:rgba(24,238,255,.07)}
+.mi{font-size:17px;display:block;margin-bottom:2px}
+.ml{font-size:11px;font-weight:700;letter-spacing:1px;display:block}
+.mt2{font-size:10px;color:var(--muted);display:block}
+.mb.ms .ml{color:var(--purple)}.mb.mw .ml{color:var(--gold)}.mb.mp .ml{color:var(--cyan)}
+.sig{display:none;padding:10px 14px;border-radius:12px;margin-bottom:9px;align-items:center;justify-content:space-between}
+.sig.show{display:flex}
+.sig.sell{background:rgba(255,51,85,.12);border:1px solid rgba(255,51,85,.5)}
+.sig.buy{background:rgba(0,255,170,.08);border:1px solid rgba(0,255,170,.4)}
+.sig.wait{background:rgba(255,212,77,.07);border:1px solid rgba(255,212,77,.3)}
+.st{font-size:12px;font-weight:700;letter-spacing:1px;font-family:'Orbitron',sans-serif}
+.sell .st{color:var(--red)}.buy .st{color:var(--green)}.wait .st{color:var(--gold)}
+.ss{font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:2px}
+.sn{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900}
+.sell .sn{color:var(--red)}.buy .sn{color:var(--green)}.wait .sn{color:var(--gold)}
+.pduo{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:9px}
+.pc{background:var(--bg1);border-radius:12px;padding:10px 12px;border:1px solid var(--border);position:relative;overflow:hidden}
+.pc::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.pc.gold::after{background:linear-gradient(90deg,var(--gold),transparent)}
+.pc.dxy::after{background:linear-gradient(90deg,var(--cyan),transparent)}
+.pl{font-size:10px;letter-spacing:2px;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+.pv{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:700;line-height:1.1;margin:3px 0}
+.pc.gold .pv{color:var(--gold)}.pc.dxy .pv{color:var(--cyan)}
+.pc2{font-size:11px;font-family:'IBM Plex Mono',monospace}
+.up{color:var(--green)}.dn{color:var(--red)}
+.ptm{font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:3px}
+.sc{background:linear-gradient(135deg,rgba(255,212,77,.06),rgba(0,229,255,.03));border-color:var(--borderG)}
+.si{display:flex;align-items:center;gap:14px}
+.dl{position:relative;flex-shrink:0}.dl svg{width:106px;height:106px}
+.db{fill:none;stroke:rgba(255,255,255,.04);stroke-width:11}
+.da{fill:none;stroke-width:11;stroke-linecap:round;transform-origin:center;transform:rotate(-90deg);stroke-dasharray:283;stroke-dashoffset:283;transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1),stroke .5s}
+.dc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.dn3{font-family:'Orbitron',sans-serif;font-size:26px;font-weight:900;line-height:1;transition:color .5s}
+.du{font-size:10px;color:var(--muted);letter-spacing:1px}
+.sbs{flex:1}
+.sb3{display:flex;align-items:center;gap:6px;margin-bottom:6px}.sb3:last-child{margin-bottom:0}
+.sbn{font-size:11px;color:var(--dim);width:64px;font-family:'IBM Plex Mono',monospace}
+.sbt{flex:1;height:5px;background:rgba(255,255,255,.04);border-radius:3px;overflow:hidden}
+.sbf{height:100%;border-radius:3px;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+.sbv{font-size:11px;font-family:'IBM Plex Mono',monospace;width:22px;text-align:right;font-weight:600}
+.smc-card{border-color:rgba(201,127,255,.25)}
+.smc-tabs{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+.smc-tab{font-size:10px;padding:4px 9px;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'IBM Plex Mono',monospace;transition:all .2s;font-weight:600}
+.smc-tab.on{background:rgba(201,127,255,.15);border-color:rgba(201,127,255,.4);color:var(--purple)}
+.smc-pane{display:none}.smc-pane.show{display:block}
+.sw-row{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border-radius:7px;margin-bottom:4px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);font-family:'IBM Plex Mono',monospace;font-size:11px}
+.sw-badge{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700}
+.hh{background:rgba(0,255,170,.12);color:var(--green);border:1px solid rgba(0,255,170,.25)}
+.lh{background:rgba(255,149,0,.12);color:var(--orange);border:1px solid rgba(255,149,0,.25)}
+.hl{background:rgba(24,238,255,.12);color:var(--cyan);border:1px solid rgba(24,238,255,.25)}
+.ll{background:rgba(255,51,85,.12);color:var(--red);border:1px solid rgba(255,51,85,.25)}
+.ob-row{display:flex;align-items:center;justify-content:space-between;padding:6px 9px;border-radius:7px;margin-bottom:5px;border:1px solid transparent;font-family:'IBM Plex Mono',monospace;font-size:11px}
+.ob-bull{border-color:rgba(0,255,170,.3);background:rgba(0,255,170,.05)}
+.ob-bear{border-color:rgba(255,51,85,.3);background:rgba(255,51,85,.04)}
+.ob-lbl{font-size:10px;font-weight:700;letter-spacing:1px;min-width:80px}
+.ob-bull .ob-lbl{color:var(--green)}.ob-bear .ob-lbl{color:var(--red)}
+.ob-price{font-weight:700}
+.ob-bull .ob-price{color:var(--green)}.ob-bear .ob-price{color:var(--red)}
+.fvg-row{display:flex;align-items:center;justify-content:space-between;padding:5px 9px;border-radius:7px;margin-bottom:4px;border:1px solid transparent;font-family:'IBM Plex Mono',monospace;font-size:11px}
+.fvg-bull{border-color:rgba(0,255,170,.2);background:rgba(0,255,170,.03)}
+.fvg-bear{border-color:rgba(255,51,85,.2);background:rgba(255,51,85,.03)}
+.fvg-tag{font-size:10px;padding:1px 6px;border-radius:5px;font-weight:700}
+.fvg-bull .fvg-tag{background:rgba(0,255,170,.15);color:var(--green)}
+.fvg-bear .fvg-tag{background:rgba(255,51,85,.15);color:var(--red)}
+.tf-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.tf-box{padding:8px 10px;border-radius:9px;border:1px solid var(--border);background:rgba(255,255,255,.02)}
+.tf-lbl{font-size:10px;letter-spacing:2px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:3px}
+.tf-val{font-size:12px;font-weight:700;font-family:'Orbitron',sans-serif}
+.tf-sub{font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:2px}
+.tf-box.bull{border-color:rgba(0,255,170,.25)}.tf-box.bull .tf-val{color:var(--green)}
+.tf-box.bear{border-color:rgba(255,51,85,.25)}.tf-box.bear .tf-val{color:var(--red)}
+.tf-box.side{border-color:rgba(255,212,77,.2)}.tf-box.side .tf-val{color:var(--gold)}
+.choch-row{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:7px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);margin-bottom:5px}
+.choch-name{font-size:11px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.choch-desc{font-size:10px;color:var(--muted);margin-top:1px}
+.choch-row.true-up{border-color:rgba(0,255,170,.25);background:rgba(0,255,170,.04)}.choch-row.true-up .choch-name{color:var(--green)}
+.choch-row.true-dn{border-color:rgba(255,51,85,.25);background:rgba(255,51,85,.03)}.choch-row.true-dn .choch-name{color:var(--red)}
+.fib-row{display:flex;align-items:center;justify-content:space-between;padding:5px 9px;border-radius:6px;margin-bottom:3px;border:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02);font-family:'IBM Plex Mono',monospace;font-size:11px}
+.fib-row.golden{border-color:rgba(255,212,77,.35);background:rgba(255,212,77,.07)}
+.fib-row.at-price{border-color:rgba(24,238,255,.4);background:rgba(24,238,255,.08)}
+.fib-lbl{font-size:10px;color:var(--dim)}.fib-val{font-weight:700}
+.fib-row.golden .fib-lbl,.fib-row.golden .fib-val{color:var(--gold)}
+.fib-row.at-price .fib-val{color:var(--cyan)}
+.liq-row{display:flex;align-items:center;justify-content:space-between;padding:6px 9px;border-radius:7px;margin-bottom:4px;border:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02);font-family:'IBM Plex Mono',monospace;font-size:11px}
+.liq-row.sweep-buy{border-color:rgba(0,255,170,.3);background:rgba(0,255,170,.04)}
+.liq-row.sweep-sell{border-color:rgba(255,51,85,.3);background:rgba(255,51,85,.04)}
+.zr{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:8px;margin-bottom:6px;border:1px solid transparent}
+.zr.r{background:rgba(255,51,85,.05);border-color:rgba(255,51,85,.22)}
+.zr.e{background:rgba(255,212,77,.06);border-color:rgba(255,212,77,.3)}
+.zr.s{background:rgba(0,255,170,.04);border-color:rgba(0,255,170,.2)}
+.zn{font-size:12px;font-weight:700}.zh{font-size:10px;color:var(--muted);margin-top:2px}
+.zr.r .zn{color:var(--red)}.zr.e .zn{color:var(--gold)}.zr.s .zn{color:var(--green)}
+.zp{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;text-align:right}
+.zb{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700;display:inline-block;margin-top:2px;text-align:right}
+.zr.r .zb{background:rgba(255,51,85,.15);color:var(--red)}.zr.e .zb{background:rgba(255,212,77,.15);color:var(--gold)}.zr.s .zb{background:rgba(0,255,170,.12);color:var(--green)}
+.tr-card{border-color:var(--borderG)}
+.tr-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.tr-s{font-size:11px;font-weight:800;padding:3px 12px;border-radius:20px;letter-spacing:2px;font-family:'Orbitron',sans-serif}
+.ts-sell{background:rgba(255,51,85,.15);color:var(--red);border:1px solid rgba(255,51,85,.4)}
+.ts-buy{background:rgba(0,255,170,.12);color:var(--green);border:1px solid rgba(0,255,170,.35)}
+.ts-wait{background:rgba(255,212,77,.1);color:var(--gold);border:1px solid rgba(255,212,77,.3)}
+.tg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:8px}
+.tgi{text-align:center;padding:7px;background:rgba(255,255,255,.02);border-radius:8px;border:1px solid var(--border)}
+.tgl{font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:3px;font-family:'IBM Plex Mono',monospace}
+.tgv{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700}
+.tgi.sl .tgv{color:var(--red)}.tgi.en .tgv{color:var(--gold);font-size:16px}.tgi.tp .tgv{color:var(--green)}
+.rr{display:flex;gap:7px}
+.rrb{flex:1;padding:6px;background:rgba(0,229,255,.04);border:1px solid rgba(0,229,255,.12);border-radius:8px;text-align:center}
+.rrl{font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:2px}
+.rrv{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--cyan)}
+.lg-card{border-color:rgba(201,127,255,.2)}
+.ltabs{display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap}
+.lt{font-size:10px;padding:3px 9px;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'IBM Plex Mono',monospace;transition:all .2s;font-weight:600}
+.lt.on{background:rgba(201,127,255,.15);border-color:rgba(201,127,255,.4);color:var(--purple)}
+.lc2{display:none}.lc2.show{display:block}
+.ci2{display:flex;align-items:flex-start;gap:8px;padding:7px 9px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);margin-bottom:5px}
+.cico{font-size:14px;flex-shrink:0;margin-top:1px}.cname{font-size:11px;font-weight:700}
+.cdesc{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.5}
+.cval{font-size:10px;font-family:'IBM Plex Mono',monospace;margin-top:3px;color:var(--dim)}
+.ci2.pass{border-color:rgba(0,255,170,.2);background:rgba(0,255,170,.04)}.ci2.pass .cname{color:var(--green)}
+.ci2.fail{border-color:rgba(255,51,85,.2);background:rgba(255,51,85,.03)}.ci2.fail .cname{color:var(--red)}
+.ci2.warn{border-color:rgba(255,149,0,.25);background:rgba(255,149,0,.04)}.ci2.warn .cname{color:var(--orange)}
+.dtr{font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.8}
+.dn4{padding:5px 8px;border-radius:6px;margin-bottom:4px}
+.di{background:rgba(24,238,255,.05);border-left:2px solid var(--cyan);color:var(--cyan)}
+.dth{background:rgba(0,255,170,.05);border-left:2px solid var(--green);color:var(--green);margin-left:12px}
+.dnt{background:rgba(255,212,77,.05);border-left:2px solid var(--gold);color:var(--gold)}
+.fb{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.9}
+.fl{display:flex;justify-content:space-between;padding:2px 0}.fl.tot{border-top:1px solid var(--border);margin-top:4px;padding-top:6px}
+.fp{font-weight:600}.fp.go{color:var(--gold)}.fp.cy{color:var(--cyan)}.fp.gr{color:var(--green)}.fp.pu{color:var(--purple)}.fp.or{color:var(--orange)}
+.fp.big{font-size:14px;font-family:'Orbitron',sans-serif}
+.tv-card{padding:10px}.tv-wrap{border-radius:8px;overflow:hidden}
+.tv-tabs{display:flex;gap:4px}
+.tv-tab{font-size:10px;padding:3px 8px;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'IBM Plex Mono',monospace;transition:all .2s;font-weight:600}
+.tv-tab.active{background:rgba(255,212,77,.15);border-color:var(--gold2);color:var(--gold)}
+.tfs{display:flex;gap:4px;flex-wrap:wrap}
+.tfb{font-size:10px;padding:2px 7px;border-radius:5px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'IBM Plex Mono',monospace;transition:all .2s;font-weight:600}
+.tfb.on{background:var(--glow);border-color:var(--gold2);color:var(--gold)}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.fi{padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid var(--border)}
+.fil{font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:3px;font-family:'IBM Plex Mono',monospace;font-weight:600}
+.fiv{font-size:11px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.fiv.ok{color:var(--green)}.fiv.warn{color:var(--orange)}.fiv.bad{color:var(--red)}.fiv.info{color:var(--cyan)}
+.fin{font-size:10px;color:var(--muted);margin-top:2px}
+.le{display:flex;gap:7px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)}.le:last-child{border-bottom:none}
+.let{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);white-space:nowrap;flex-shrink:0;padding-top:1px}
+.lem{font-size:11px;color:var(--dim);line-height:1.5}
+.lem .g{color:var(--gold);font-weight:600}.lem .c{color:var(--cyan)}.lem .r{color:var(--red)}.lem .gr{color:var(--green)}.lem .p{color:var(--purple)}.lem .or{color:var(--orange)}
+.bt-card{border-color:rgba(201,127,255,.25)}
+.bt-run{padding:6px 14px;border-radius:8px;border:1px solid rgba(201,127,255,.4);background:rgba(201,127,255,.12);color:var(--purple);font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;font-weight:600;transition:all .2s}
+.bt-run:active{background:rgba(201,127,255,.25)}.bt-run:disabled{opacity:.4;pointer-events:none}
+.wr-bar{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);margin-bottom:10px}
+.wr-num{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;min-width:56px}
+.wr-lbl{font-size:10px;letter-spacing:2px;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+.wr-track{flex:1;height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden}
+.wr-fill{height:100%;border-radius:4px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.bt-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.bt-box{text-align:center;padding:7px 5px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05)}
+.bt-bv{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700}
+.bt-bl{font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:2px}
+.bt-log{max-height:160px;overflow-y:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.7;background:rgba(0,0,0,.3);border-radius:8px;padding:8px;color:var(--muted);scrollbar-width:thin}
+.gs-card{border-color:rgba(0,255,170,.2)}
+.tl-list{max-height:200px;overflow-y:auto;scrollbar-width:thin}
+.tl-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:7px;border:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02);margin-bottom:4px}
+.tl-item.win{border-color:rgba(0,255,170,.2);background:rgba(0,255,170,.03)}
+.tl-item.loss{border-color:rgba(255,51,85,.2);background:rgba(255,51,85,.03)}
+.tl-item.pending{border-color:rgba(255,212,77,.2);background:rgba(255,212,77,.03)}
+.tl-sig{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;min-width:36px}
+.tl-item.win .tl-sig{color:var(--green)}.tl-item.loss .tl-sig{color:var(--red)}.tl-item.pending .tl-sig{color:var(--gold)}
+.tl-info{flex:1;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim)}
+.tl-btn{display:flex;gap:4px}
+.wl-btn{padding:3px 8px;border-radius:5px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;border:1px solid;transition:all .15s}
+.wl-btn.w{border-color:rgba(0,255,170,.35);background:rgba(0,255,170,.1);color:var(--green)}
+.wl-btn.l{border-color:rgba(255,51,85,.35);background:rgba(255,51,85,.1);color:var(--red)}
+.gs-sync{flex:1;padding:7px;border-radius:8px;border:1px solid rgba(0,255,170,.3);background:rgba(0,255,170,.08);color:var(--green);font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .2s;font-weight:600}
+.gs-sync:active{background:rgba(0,255,170,.2)}
+.rec-card{border-color:rgba(24,238,255,.2)}
+.rec-empty{text-align:center;padding:14px;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;line-height:1.6}
+.rec-item{padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02);margin-bottom:5px}
+.rec-item.rec-sell{border-color:rgba(255,51,85,.25);background:rgba(255,51,85,.04)}
+.rec-item.rec-buy{border-color:rgba(0,255,170,.2);background:rgba(0,255,170,.03)}
+.rec-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.rec-sig{font-size:12px;font-weight:700;font-family:'Orbitron',sans-serif}
+.rec-sell .rec-sig{color:var(--red)}.rec-buy .rec-sig{color:var(--green)}
+.rec-time{font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+.rec-body{display:flex;gap:7px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace;font-size:10px}
+.rec-k{color:var(--muted)}.rec-v{color:var(--text)}.rec-reason{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5}
+.brow{display:flex;gap:7px;margin-bottom:7px}
+.abtn{flex:1;padding:11px;border-radius:11px;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .3s;border:1px solid var(--borderG);background:linear-gradient(135deg,rgba(255,212,77,.1),rgba(24,238,255,.06));color:var(--gold)}
+.abtn.armed{border-color:rgba(255,51,85,.5);background:rgba(255,51,85,.12);color:var(--red)}
+.rbtn{padding:11px 16px;border-radius:11px;cursor:pointer;background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--muted);font-size:18px;transition:all .2s}
+.rbtn:active{border-color:var(--cyan);color:var(--cyan)}
+.notice{display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:rgba(255,149,0,.06);border:1px solid rgba(255,149,0,.25);border-radius:10px;margin-bottom:9px;font-size:11px;line-height:1.6}
+.notice.hide{display:none}.ntext{color:#c0a060}.ntext b{color:var(--orange)}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(50px);background:var(--bg2);border:1px solid var(--borderG);border-radius:10px;padding:7px 16px;font-size:11px;color:var(--gold);font-family:'IBM Plex Mono',monospace;transition:transform .3s;z-index:999;white-space:nowrap;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="w">
+<div class="tb">
+  <div style="display:flex;align-items:center;gap:9px">
+    <div class="bo">⚡</div>
+    <div><div class="bn">SENTINEL <s>v9</s></div><div class="bv">SMC · OB · FVG · REAL OHLC</div></div>
+  </div>
+  <div style="text-align:right">
+    <div class="pill err" id="pill"><div class="dot"></div><span id="pTxt">INIT</span></div>
+    <div class="ck" id="clk">--:--:--</div>
+  </div>
+</div>
+<div class="sbar">
+  <div style="display:flex;align-items:center;gap:6px">
+    <div class="sd ld" id="sDot"></div>
+    <span style="color:var(--muted)">Gold: </span>
+    <span style="color:var(--cyan)" id="sVal">Connecting...</span>
+  </div>
+  <span style="color:var(--muted);font-size:10px" id="sRight">--</span>
+</div>
+<div class="setup-card" id="setupCard">
+  <div class="setup-title">🔑 API NINJAS KEY <span id="keyStatus" class="key-no">ยังไม่ได้ตั้ง</span></div>
+  <div class="setup-row">
+    <input class="setup-inp" id="apiKeyInp" type="password" placeholder="วาง API Key จาก api-ninjas.com ที่นี่">
+    <button class="setup-btn" onclick="saveApiKey()">SAVE</button>
+    <button class="setup-btn" style="background:rgba(255,255,255,.06);border-color:var(--border);color:var(--muted)" onclick="document.getElementById('setupCard').style.display='none'">ซ่อน</button>
+  </div>
+  <div class="setup-note">
+    สมัครฟรี → <a href="https://api-ninjas.com" target="_blank">api-ninjas.com</a> → My Account → API Key<br>
+    ✅ ฟรี 50,000 req/เดือน · Gold OHLC ทุก TF (5m/15m/1H/4H)
+  </div>
+</div>
+<div class="dxy-row">
+  <span style="color:var(--muted)">DXY:</span>
+  <input class="dxy-inp" id="dxyInp" type="number" step="0.001" placeholder="Auto" oninput="onDXYInput()">
+  <button class="dxy-btn" onclick="applyDXY()">SET</button>
+  <span class="dxy-auto" onclick="clearDXY()" id="dxyAuto">AUTO</span>
+  <span id="dxyStatus" style="color:var(--muted);font-size:10px;margin-left:auto;font-family:'IBM Plex Mono',monospace">อัตโนมัติ</span>
+</div>
+<div class="notice hide" id="notice"><span style="flex-shrink:0;font-size:14px">⚠️</span><div class="ntext" id="noticeText"><b>Error</b></div></div>
+<div class="sec">TRADING MODE</div>
+<div class="mbar">
+  <div class="mb ms" id="bm-scalp" onclick="setMode('scalp')"><span class="mi">⚡</span><span class="ml">SCALP</span><span class="mt2">1m–15m ≥65</span></div>
+  <div class="mb" id="bm-swing" onclick="setMode('swing')"><span class="mi">📈</span><span class="ml">SWING</span><span class="mt2">1H–4H ≥55</span></div>
+  <div class="mb" id="bm-position" onclick="setMode('position')"><span class="mi">🏦</span><span class="ml">POSITION</span><span class="mt2">1D+ ≥50</span></div>
+</div>
+<div class="sig" id="sigB"><div><div class="st" id="sigT">--</div><div class="ss" id="sigS">--</div></div><div class="sn" id="sigN">--</div></div>
+<div class="pduo">
+  <div class="pc gold">
+    <div class="pl">XAU/USD · GOLD</div><div class="pv" id="gP">----.--</div>
+    <div class="pc2" id="gC">-- --</div>
+    <canvas id="sk1" width="130" height="26" style="margin-top:5px"></canvas>
+    <div class="ptm" id="gT">--:--</div>
+  </div>
+  <div class="pc dxy">
+    <div class="pl">DXY · DOLLAR</div><div class="pv" id="dP">--.---</div>
+    <div class="pc2" id="dC">-- --</div>
+    <canvas id="sk2" width="130" height="26" style="margin-top:5px"></canvas>
+    <div class="ptm" id="dT">--:--</div>
+  </div>
+</div>
+<div class="card sc">
+  <div class="ct">AI CONFIDENCE <span id="mLbl">SCALP</span></div>
+  <div class="si">
+    <div class="dl">
+      <svg viewBox="0 0 106 106">
+        <circle class="db" cx="53" cy="53" r="42"/>
+        <circle class="da" id="dArc" cx="53" cy="53" r="42"/>
+        <defs>
+          <linearGradient id="gS" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#ffd44d"/><stop offset="100%" stop-color="#ff3355"/></linearGradient>
+          <linearGradient id="gB" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#18eeff"/><stop offset="100%" stop-color="#00ffaa"/></linearGradient>
+        </defs>
+      </svg>
+      <div class="dc"><div class="dn3" id="dNum">0</div><div class="du">/ 100</div></div>
+    </div>
+    <div class="sbs" id="sBars"></div>
+  </div>
+</div>
+<div class="card lg-card">
+  <div class="ct">AI LOGIC ENGINE <span>SMC+OB+FVG REAL</span></div>
+  <div class="ltabs">
+    <button class="lt on" onclick="showTab('c')">CONDITIONS</button>
+    <button class="lt" onclick="showTab('d')">DECISION</button>
+    <button class="lt" onclick="showTab('f')">FORMULA</button>
+  </div>
+  <div class="lc2 show" id="tc"><div id="cList"></div></div>
+  <div class="lc2" id="td"><div class="dtr" id="dTree"></div></div>
+  <div class="lc2" id="tf"><div class="fb" id="fBox"></div></div>
+</div>
+<div class="card smc-card" style="margin-top:-5px;border-radius:6px 6px 13px 13px">
+  <div class="ct">SMC ENGINE <span style="color:var(--purple)" id="smcSrc">4H/1H/15m · REAL</span></div>
+  <div class="smc-tabs">
+    <button class="smc-tab on" onclick="smcTab('swing')">SWING</button>
+    <button class="smc-tab" onclick="smcTab('mtf')">MULTI-TF</button>
+    <button class="smc-tab" onclick="smcTab('choch')">CHoCH/BOS</button>
+    <button class="smc-tab" onclick="smcTab('liq')">LIQUIDITY</button>
+    <button class="smc-tab" onclick="smcTab('ob')">OB + FVG</button>
+    <button class="smc-tab" onclick="smcTab('fib')">FIB</button>
+    <button class="smc-tab" onclick="smcTab('final')">FINAL</button>
+  </div>
+  <div class="smc-pane show" id="smc-swing"><div id="smcSwingContent"><div class="rec-empty">รอ OHLC จริง...</div></div></div>
+  <div class="smc-pane" id="smc-mtf"><div id="smcMtfContent"></div></div>
+  <div class="smc-pane" id="smc-choch"><div id="smcChochContent"></div></div>
+  <div class="smc-pane" id="smc-liq"><div id="smcLiqContent"></div></div>
+  <div class="smc-pane" id="smc-ob"><div id="smcObContent"><div class="rec-empty">รอ OHLC จริง...</div></div></div>
+  <div class="smc-pane" id="smc-fib"><div id="smcFibContent"></div></div>
+  <div class="smc-pane" id="smc-final"><div id="smcFinalContent"></div></div>
+</div>
+<div class="card tv-card">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:5px">
+    <div class="ct" style="margin:0">PRICE ACTION <span id="cSrc">LIVE</span></div>
+    <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+      <div class="tv-tabs">
+        <button class="tv-tab active" onclick="switchTV('gold',this)">🥇 XAU</button>
+        <button class="tv-tab" onclick="switchTV('dxy',this)">💵 DXY</button>
+      </div>
+      <div class="tfs">
+        <button class="tfb" onclick="setTVTF('5',this)">5m</button>
+        <button class="tfb" onclick="setTVTF('15',this)">15m</button>
+        <button class="tfb" onclick="setTVTF('30',this)">30m</button>
+        <button class="tfb" onclick="setTVTF('60',this)">1H</button>
+        <button class="tfb on" onclick="setTVTF('240',this)">4H</button>
+      </div>
+    </div>
+  </div>
+  <div id="tv-gold" class="tv-wrap"><div id="tvGoldW"></div></div>
+  <div id="tv-dxy" class="tv-wrap" style="display:none"><div id="tvDxyW"></div></div>
+  <div style="font-size:10px;color:var(--muted);text-align:right;margin-top:4px;font-family:'IBM Plex Mono',monospace">Powered by <span style="color:var(--cyan)">TradingView</span></div>
+</div>
+<div class="card">
+  <div class="ct">KEY ZONES <span id="kzSrc">4H SMC REAL</span></div>
+  <div class="zr r"><div><div class="zn">RESISTANCE / SL</div><div class="zh">Supply · Order Block Bear · เหนือ Golden Zone</div></div><div style="text-align:right"><div class="zp" id="zR">--</div><div class="zb">SUPPLY</div></div></div>
+  <div class="zr e" style="margin-top:6px"><div><div class="zn">⚡ GOLDEN ZONE / OB Entry</div><div class="zh">Fib 61.8–78.6% + Order Block · FVG</div></div><div style="text-align:right"><div class="zp" id="zE">--</div><div class="zb">ENTRY</div></div></div>
+  <div class="zr s" style="margin-top:6px"><div><div class="zn">SUPPORT / TP</div><div class="zh">Demand · Order Block Bull</div></div><div style="text-align:right"><div class="zp" id="zS">--</div><div class="zb">DEMAND</div></div></div>
+</div>
+<div class="card tr-card">
+  <div class="tr-h">
+    <div class="ct" style="margin:0">EXECUTION PLAN <span id="execSrc" style="font-size:10px;color:var(--muted)">4H+1H</span></div>
+    <div class="tr-s ts-wait" id="trSide">◌ WAIT</div>
+  </div>
+  <div class="tg">
+    <div class="tgi sl"><div class="tgl">STOP LOSS</div><div class="tgv" id="tSL">--</div></div>
+    <div class="tgi en"><div class="tgl">ENTRY</div><div class="tgv" id="tEN">--</div></div>
+    <div class="tgi tp"><div class="tgl">TP1</div><div class="tgv" id="tTP">--</div></div>
+  </div>
+  <div class="rr">
+    <div class="rrb"><div class="rrl">R:R</div><div class="rrv" id="rrR">--</div></div>
+    <div class="rrb"><div class="rrl">TP2</div><div class="rrv" id="rrT2">--</div></div>
+    <div class="rrb"><div class="rrl">VALID</div><div class="rrv" id="rrV">--</div></div>
+  </div>
+  <div id="execNote" style="font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:6px;line-height:1.6"></div>
+</div>
+<div class="card"><div class="ct">FILTERS & GUARDS</div><div class="fg" id="fGrid"></div></div>
+<div class="card"><div class="ct">AI LOG <span id="logC">--</span></div><div id="logW"></div></div>
+<div class="card bt-card">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+    <div class="ct" style="margin:0">📊 AUTO BACKTEST <span style="color:var(--purple)" id="btSrc">4H · 500 แท่งจริง</span></div>
+    <button class="bt-run" id="btRunBtn" onclick="runBacktest()">▶ RUN BACKTEST</button>
+  </div>
+  <div class="wr-bar">
+    <div><div class="wr-lbl">WIN RATE</div><div class="wr-num" id="btWrPct" style="color:var(--green)">--%</div></div>
+    <div class="wr-track"><div class="wr-fill" id="btWrFill" style="width:0%;background:var(--green)"></div></div>
+  </div>
+  <div class="bt-stats">
+    <div class="bt-box"><div class="bt-bv" id="btTotal" style="color:var(--cyan)">0</div><div class="bt-bl">TOTAL</div></div>
+    <div class="bt-box"><div class="bt-bv" id="btWin" style="color:var(--green)">0</div><div class="bt-bl">WIN</div></div>
+    <div class="bt-box"><div class="bt-bv" id="btLoss" style="color:var(--red)">0</div><div class="bt-bl">LOSS</div></div>
+    <div class="bt-box"><div class="bt-bv" id="btRR" style="color:var(--gold)">--</div><div class="bt-bl">AVG R:R</div></div>
+  </div>
+  <div class="bt-log" id="btLog">ใส่ API Key แล้วกด RUN เพื่อ Backtest 4H 500 แท่งย้อนหลัง</div>
+</div>
+<div class="card gs-card">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+    <div class="ct" style="margin:0">🏆 WIN/LOSS TRACKER <span style="color:var(--green)" id="gsLbl">LOCAL</span></div>
+    <button style="font-size:10px;padding:3px 9px;border-radius:6px;border:1px solid rgba(255,51,85,.25);background:rgba(255,51,85,.08);color:var(--red);cursor:pointer;font-family:'IBM Plex Mono',monospace;font-weight:600" onclick="clearTrades()">ล้าง</button>
+  </div>
+  <div class="wr-bar">
+    <div><div class="wr-lbl">WIN RATE</div><div class="wr-num" id="wrPct" style="color:var(--green)">--%</div></div>
+    <div class="wr-track"><div class="wr-fill" id="wrFill" style="width:0%;background:var(--green)"></div></div>
+  </div>
+  <div class="bt-stats" style="margin-bottom:8px">
+    <div class="bt-box"><div class="bt-bv" id="wrTotal" style="color:var(--cyan)">0</div><div class="bt-bl">TOTAL</div></div>
+    <div class="bt-box"><div class="bt-bv" id="wrWin" style="color:var(--green)">0</div><div class="bt-bl">WIN</div></div>
+    <div class="bt-box"><div class="bt-bv" id="wrLoss" style="color:var(--red)">0</div><div class="bt-bl">LOSS</div></div>
+    <div class="bt-box"><div class="bt-bv" id="wrPend" style="color:var(--gold)">0</div><div class="bt-bl">PENDING</div></div>
+  </div>
+  <div class="tl-list" id="tradeList"><div class="rec-empty">ยังไม่มี Trade · Alarm ดัง → บันทึกอัตโนมัติ</div></div>
+  <div style="display:flex;gap:5px;margin-top:8px;align-items:center">
+    <input style="flex:1;background:rgba(0,255,170,.05);border:1px solid rgba(0,255,170,.2);border-radius:6px;color:var(--green);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 8px;outline:none;min-width:0" id="gsUrl" placeholder="Google Apps Script Web App URL" type="url">
+    <button style="padding:4px 10px;border-radius:6px;border:1px solid rgba(0,255,170,.3);background:rgba(0,255,170,.1);color:var(--green);font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;font-weight:600" onclick="saveGsUrl()">SAVE</button>
+  </div>
+  <div style="display:flex;gap:5px;margin-top:6px">
+    <button class="gs-sync" onclick="syncSheets()"><span>📤</span><span id="syncTxt">Sync → Google Sheets</span></button>
+    <button onclick="testGoogleSheet()" style="padding:7px 12px;border-radius:8px;border:1px solid rgba(24,238,255,.3);background:rgba(24,238,255,.08);color:var(--cyan);font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;font-weight:600;white-space:nowrap" id="testGsBtn">🔬 TEST</button>
+  </div>
+</div>
+<div class="card rec-card">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <div class="ct" style="margin:0">🔔 ALERT RECORDS <span style="color:var(--cyan)" id="recCnt">0 รายการ</span></div>
+    <button style="font-size:10px;padding:2px 8px;border-radius:6px;border:1px solid rgba(255,51,85,.25);background:rgba(255,51,85,.08);color:var(--red);cursor:pointer;font-family:'IBM Plex Mono',monospace" onclick="clearAlerts()">ล้าง</button>
+  </div>
+  <div id="recList"><div class="rec-empty">ยังไม่มีการแจ้งเตือน</div></div>
+</div>
+<div class="brow">
+  <button class="abtn" id="aBtn" onclick="toggleAlarm()"><span id="aIco">🔔</span><span id="aTxt">ALARM OFF</span></button>
+  <button class="rbtn" id="rBtn" onclick="manualRefresh()">↻</button>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+'use strict';
+// ═══════════════════════════════════════════════════════════
+// SENTINEL v9 — Real OHLC · SMC · Order Block · FVG · Backtest
+// ═══════════════════════════════════════════════════════════
+const GOLD_URL='https://gold-proxy.worrawut-won.workers.dev/';
+const FX_URL='https://api.frankfurter.app/latest?from=USD&to=EUR,JPY,GBP,CAD,SEK,CHF';
+// API Ninjas gold price history — via Cloudflare Worker (to hide key + bypass CORS)
+// Worker endpoint: /ohlc?tf=1H&limit=500
+// If no worker, call Ninjas directly with API key header
+const NINJAS_API_KEY = 'pby16WeV9IbfVLSUiDAPdCJKL8NV33rOBudWZaeC';
+// API Ninjas Gold Price Historical — correct endpoint
+// GET /v1/goldpricehistorical?interval=1h&limit=500
+// intervals: 1m 5m 15m 30m 1h 4h 1d
+const NINJAS_OHLC_URL = 'https://api.api-ninjas.com/v1/goldpricehistorical';
+
+const MODES={
+scalp:   {label:‘SCALP’,   minScore:65,rrMin:1.5,slPct:0.5, tp1Pct:0.9, tp2Pct:1.6, w:{smc:20,fib:15,ob:25,corr:20,vol:20}},
+swing:   {label:‘SWING’,   minScore:55,rrMin:2.0,slPct:1.2, tp1Pct:2.5, tp2Pct:4.0, w:{smc:25,fib:15,ob:25,corr:25,vol:10}},
+position:{label:‘POSITION’,minScore:50,rrMin:3.0,slPct:3.0, tp1Pct:8.0, tp2Pct:15.0,w:{smc:30,fib:10,ob:30,corr:25,vol:5}},
+};
+
+const S={
+gold:null,dxy:null,goldPrev:null,dxyPrev:null,
+goldCh:0,goldChp:0,hist:[],goldSpk:[],dxySpk:[],
+mode:‘scalp’,tf:‘1H’,isLive:false,fetchN:0,lastFetch:null,
+alarmOn:false,audioCtx:null,refreshT:null,dxyManual:null,
+apiKey:null,
+candles:{},         // real OHLC per TF: {‘4H’:[],‘1H’:[],‘15m’:[],‘5m’:[]}
+candleFetchTime:{}, // last fetch time per TF
+smcCache:null,
+};
+// ─── Clock ────────────────────────────────────────────────
+setInterval(()=>{ document.getElementById(‘clk’).textContent=new Date().toLocaleTimeString(‘th-TH’,{hour:‘2-digit’,minute:‘2-digit’,second:‘2-digit’,hour12:false}); },1000);
+
+// ─── Session ──────────────────────────────────────────────
+function sess(){
+const h=new Date().getUTCHours();
+if(h>=7&&h<12)  return{name:‘LONDON’,pts:20,ok:true,col:‘var(–green)’};
+if(h>=13&&h<21) return{name:‘NY’,pts:20,ok:true,col:‘var(–gold)’};
+if(h>=12&&h<13) return{name:‘OVERLAP’,pts:15,ok:true,col:‘var(–cyan)’};
+return{name:‘TOKYO’,pts:8,ok:false,col:‘var(–muted)’};
+}
+
+// ─── Fetch Helpers ─────────────────────────────────────────
+async function apiFetch(url,headers={}){
+const ctrl=new AbortController();
+const t=setTimeout(()=>ctrl.abort(),12000);
+try{
+const res=await fetch(url,{signal:ctrl.signal,headers});
+clearTimeout(t);
+if(!res.ok) throw new Error(’HTTP ’+res.status);
+return await res.json();
+}catch(e){clearTimeout(t);throw e;}
+}
+
+// ─── API Key Management ────────────────────────────────────
+async function saveApiKey(){
+const k=document.getElementById(‘apiKeyInp’).value.trim();
+if(!k){showToast(‘⚠️ กรุณากรอก API Key’);return;}
+try{localStorage.setItem(‘sentinel_api_key’,k);}catch(e){}
+S.apiKey=k; updateKeyStatus();
+document.getElementById(‘apiKeyInp’).value=’’;
+await testApiKey();
+}
+function loadApiKey(){
+try{const stored=localStorage.getItem(‘sentinel_api_key’);S.apiKey=stored||NINJAS_API_KEY;}
+catch(e){S.apiKey=NINJAS_API_KEY;}
+updateKeyStatus();
+if(S.apiKey) document.getElementById(‘setupCard’).style.display=‘none’;
+}
+function updateKeyStatus(){
+const el=document.getElementById(‘keyStatus’);
+if(S.apiKey){el.textContent=‘✓ พร้อมใช้’;el.className=‘key-ok’;}
+else{el.textContent=‘ยังไม่ได้ตั้ง’;el.className=‘key-no’;}
+}
+async function testApiKey(){
+const el=document.getElementById(‘keyStatus’);
+el.textContent=‘⏳ ทดสอบ…’;el.className=‘key-ok’;
+try{
+const url=NINJAS_OHLC_URL+’?interval=1h&limit=5’;
+const data=await apiFetch(url,{‘X-Api-Key’:S.apiKey});
+if(Array.isArray(data)&&data.length>0){
+el.textContent=‘✓ OK · ‘+data.length+’ candles’;el.className=‘key-ok’;
+showToast(‘✅ API Ninjas ใช้งานได้ — กำลังดึง OHLC…’);
+fetchOHLC(‘4H’,500).then(()=>fetchOHLC(‘1H’,200)).then(()=>fetchOHLC(‘15m’,100)).then(()=>{S.smcCache=null;render();});
+return true;
+}else if(data&&data.error){
+el.textContent=’✗ ’+String(data.error).substring(0,25);el.className=‘key-no’;
+showToast(’❌ ’+data.error);return false;
+}
+el.textContent=‘✗ ข้อมูลว่าง’;el.className=‘key-no’;return false;
+}catch(e){
+el.textContent=’✗ ’+e.message.substring(0,25);el.className=‘key-no’;
+showToast(’❌ API: ’+e.message.substring(0,30));return false;
+}
+}
+// ─── Real OHLC from API Ninjas ──────────────────────────────
+// API Ninjas goldpricehistorical intervals: 1m 5m 15m 30m 1h 4h 1d
+const TF_MAP={‘5m’:‘5m’,‘15m’:‘15m’,‘30m’:‘30m’,‘1H’:‘1h’,‘4H’:‘4h’,‘1D’:‘1d’};
+const TF_MINUTES={‘5m’:5,‘15m’:15,‘30m’:30,‘1H’:60,‘4H’:240,‘1D’:1440};
+
+async function fetchOHLC(tf, limit=200){
+if(!S.apiKey) return false;
+const now=Date.now();
+const minAge=(tf===‘4H’||tf===‘1D’)?15*60000:5*60000;
+if(S.candles[tf]&&S.candles[tf].length>0&&(now-(S.candleFetchTime[tf]||0))<minAge) return true;
+try{
+const interval=TF_MAP[tf]||‘1h’;
+const url=`${NINJAS_OHLC_URL}?interval=${interval}&limit=${limit}`;
+const data=await apiFetch(url,{‘X-Api-Key’:S.apiKey});
+if(!Array.isArray(data)||!data.length){
+console.warn(‘OHLC empty’,tf,data);
+if(!S.candles[tf]||!S.candles[tf].length) S.candles[tf]=buildSyntheticCandles(tf,limit);
+return false;
+}
+// Ninjas returns: [{open,high,low,close,time(unix)}]
+const candles=data.sort((a,b)=>(a.time||a.timestamp)-(b.time||b.timestamp)).map(d=>({
+t:(d.time||d.timestamp)*1000,
+o:parseFloat(d.open||d.price),
+h:parseFloat(d.high||d.open||d.price),
+l:parseFloat(d.low||d.open||d.price),
+c:parseFloat(d.close||d.price),
+v:parseFloat(d.volume||1),
+})).filter(c=>!isNaN(c.o)&&!isNaN(c.h));
+if(candles.length<5){
+console.warn(‘OHLC too few candles’,tf,candles.length);
+if(!S.candles[tf]||!S.candles[tf].length) S.candles[tf]=buildSyntheticCandles(tf,limit);
+return false;
+}
+S.candles[tf]=candles;
+S.candleFetchTime[tf]=now;
+S.smcCache=null;
+const srcEl=document.getElementById(‘smcSrc’);
+if(srcEl) srcEl.textContent=`REAL OHLC · 4H/1H/15m · ${candles.length}แท่ง`;
+console.log(‘OHLC loaded’,tf,candles.length,‘candles’);
+return true;
+}catch(e){
+console.warn(‘OHLC fetch fail’,tf,e.message);
+if(!S.candles[tf]||!S.candles[tf].length) S.candles[tf]=buildSyntheticCandles(tf,limit);
+return false;
+}
+}
+
+// Synthetic candle fallback (when no API key or API fails)
+function seededRng(seed){let s=seed;return()=>{s=(s*1664525+1013904223)&0xffffffff;return(s>>>0)/4294967296};}
+function buildSyntheticCandles(tf,count=200){
+const price=S.gold||3300;
+const vol={‘5m’:0.0012,‘15m’:0.0025,‘30m’:0.004,‘1H’:0.007,‘4H’:0.015,‘1D’:0.025};
+const v=vol[tf]||0.007;
+const rng=seededRng(parseInt(tf)||60+Math.floor(price));
+const candles=[];let p=price,mom=0;
+for(let i=0;i<count;i++){
+const r1=rng(),r2=rng(),r3=rng(),r4=rng(),r5=rng();
+const rev=(price-p)*0.015;
+mom=mom*0.75+(r1-0.5)*v*p+rev;
+const body=mom+(r2-0.5)*v*p*0.2;
+const o=p,cl=o+body;
+const hi=Math.max(o,cl)+r3*v*p*1.5,lo=Math.min(o,cl)-r4*v*p*1.5;
+candles.push({t:Date.now()-(count-i)*TF_MINUTES[tf]*60000,o,h:hi,l:lo,c:cl,v:0.3+r5*1.5});
+p=cl;
+}
+if(candles.length){const last=candles[candles.length-1];last.c=price;last.h=Math.max(last.h,price);last.l=Math.min(last.l,price);}
+return candles;
+}
+
+function getCandles(tf){
+if(!S.candles[tf]||!S.candles[tf].length) S.candles[tf]=buildSyntheticCandles(tf,200);
+return S.candles[tf];
+}
+
+// ─── Gold + DXY Price ──────────────────────────────────────
+async function getGoldPrice(){
+const d=await apiFetch(GOLD_URL);
+if(!d.price) throw new Error(‘No price’);
+const prev=S.gold||d.price;
+return{price:d.price,ch:parseFloat((d.price-prev).toFixed(2)),chp:parseFloat(((d.price-prev)/prev*100).toFixed(2)),dxy:d.dxy||null};
+}
+async function getDXY(){
+if(S.dxyManual!==null) return S.dxyManual;
+const d=await apiFetch(FX_URL);
+if(!d.rates) throw new Error(‘No DXY’);
+const{EUR,JPY,GBP,CAD,SEK,CHF}=d.rates;
+const raw=50.14348112*Math.pow(1/EUR,-0.576)*Math.pow(JPY,0.136)*Math.pow(1/GBP,-0.119)*Math.pow(CAD,0.091)*Math.pow(SEK,0.042)*Math.pow(CHF,0.036);
+return parseFloat(raw.toFixed(3));
+}
+
+function buildHist(p){
+if(!S.hist.length&&p){const s=[];for(let i=11;i>=0;i–)s.push(p*(1+Math.sin(i*0.7)*0.004));S.hist=s;}
+const h=[…S.hist,p];if(h.length>48)h.shift();return h;
+}
+
+async function fetchAll(){
+setStat(‘ld’,‘Fetching…’);
+let gData;
+try{gData=await getGoldPrice();}
+catch(e){setStat(‘er’,’Gold: ’+e.message);setPill(‘err’,‘ERR’);showNotice(’Gold API Error: ’+e.message);if(S.gold)render();return;}
+let dxy=S.dxy;
+if(S.dxyManual!==null) dxy=S.dxyManual;
+else if(gData.dxy?.value) dxy=gData.dxy.value;
+else{try{dxy=await getDXY();}catch(e){console.warn(‘DXY fail’);}}
+S.goldPrev=S.gold;S.dxyPrev=S.dxy;
+S.goldCh=gData.ch;S.goldChp=gData.chp;
+S.gold=gData.price;S.dxy=dxy;
+S.hist=buildHist(S.gold);
+S.goldSpk=[…S.hist].slice(-10);
+S.dxySpk=[…(S.dxySpk.length?S.dxySpk:[dxy||99]),dxy||99].slice(-10);
+S.isLive=true;S.fetchN++;S.lastFetch=new Date();
+setStat(‘ok’,`Gold ${S.gold.toFixed(2)} · DXY ${(S.dxy||0).toFixed(3)}`);
+setPill(‘live’,‘LIVE’);hideNotice();
+document.getElementById(‘cSrc’).textContent=‘LIVE’;
+// Also fetch OHLC if we have API key (non-blocking)
+if(S.apiKey){
+fetchOHLC(‘4H’,500).then(()=>fetchOHLC(‘1H’,200)).then(()=>fetchOHLC(‘15m’,100)).then(()=>{S.smcCache=null;render();});
+}
+render();startCD(30);
+}
+
+// ─── SMC Engine ────────────────────────────────────────────
+function detectSwings(candles,pivot=4){
+const sw=[];
+for(let i=pivot;i<candles.length-pivot;i++){
+const c=candles[i];
+let hi=true,lo=true;
+for(let j=1;j<=pivot;j++){
+if(candles[i-j].h>=c.h||candles[i+j].h>=c.h)hi=false;
+if(candles[i-j].l<=c.l||candles[i+j].l<=c.l)lo=false;
+}
+if(hi)sw.push({type:‘H’,price:c.h,idx:i,t:c.t});
+if(lo)sw.push({type:‘L’,price:c.l,idx:i,t:c.t});
+}
+return sw;
+}
+function labelSwings(sw){
+const hs=sw.filter(s=>s.type===‘H’),ls=sw.filter(s=>s.type===‘L’);
+const out=[];
+hs.forEach((s,i)=>{if(i===0){out.push({…s,lbl:‘SH’});return;}out.push({…s,lbl:s.price>hs[i-1].price?‘HH’:‘LH’});});
+ls.forEach((s,i)=>{if(i===0){out.push({…s,lbl:‘SL’});return;}out.push({…s,lbl:s.price<ls[i-1].price?‘LL’:‘HL’});});
+return out.sort((a,b)=>a.idx-b.idx);
+}
+function detectTrend(sw){
+const hs=sw.filter(s=>s.lbl===‘HH’||s.lbl===‘LH’).slice(-3);
+const ls=sw.filter(s=>s.lbl===‘HL’||s.lbl===‘LL’).slice(-3);
+if(!hs.length||!ls.length)return’SIDEWAY’;
+const lh=hs[hs.length-1],ll=ls[ls.length-1];
+if(lh.lbl===‘HH’&&ll.lbl===‘HL’)return’UPTREND’;
+if(lh.lbl===‘LH’&&ll.lbl===‘LL’)return’DOWNTREND’;
+return’SIDEWAY’;
+}
+function detectCHoCH(sw,price){
+const hs=sw.filter(s=>s.lbl===‘HH’||s.lbl===‘LH’);
+const ls=sw.filter(s=>s.lbl===‘HL’||s.lbl===‘LL’);
+if(hs.length<2||ls.length<2)return{choch:false,dir:null,desc:‘ข้อมูลไม่พอ’};
+const lastHL=ls.filter(s=>s.lbl===‘HL’).pop();
+const lastLH=hs.filter(s=>s.lbl===‘LH’).pop();
+const prevHH=hs.filter(s=>s.lbl===‘HH’);
+if(prevHH.length&&lastHL&&price<lastHL.price)return{choch:true,dir:‘DOWN’,price:lastHL.price,desc:`หลุด HL@${lastHL.price.toFixed(0)}`};
+const prevLL=ls.filter(s=>s.lbl===‘LL’);
+if(prevLL.length&&lastLH&&price>lastLH.price)return{choch:true,dir:‘UP’,price:lastLH.price,desc:`ทะลุ LH@${lastLH.price.toFixed(0)}`};
+return{choch:false,dir:null,desc:‘ยังไม่เกิด’};
+}
+function detectBOS(sw,price){
+const hs=sw.filter(s=>s.lbl===‘HH’);
+const ls=sw.filter(s=>s.lbl===‘LL’);
+const lHH=hs[hs.length-1],lLL=ls[ls.length-1];
+if(lHH&&price>lHH.price)return{bos:true,dir:‘UP’,price:lHH.price,desc:`ทะลุ HH@${lHH.price.toFixed(0)}`};
+if(lLL&&price<lLL.price)return{bos:true,dir:‘DOWN’,price:lLL.price,desc:`ทะลุ LL@${lLL.price.toFixed(0)}`};
+return{bos:false,dir:null,desc:‘ยังไม่เกิด’};
+}
+function detectLiqSweep(sw,price,candles){
+if(!sw.length||!candles.length)return{sweep:false,type:null,level:null,desc:‘ไม่มี Sweep’};
+const rH=sw.filter(s=>s.type===‘H’).slice(-5);
+const rL=sw.filter(s=>s.type===‘L’).slice(-5);
+const prev=candles.length>1?candles[candles.length-2]:candles[0];
+const cur=candles[candles.length-1];
+for(const sh of rH){if(prev.h>sh.price&&cur.c<sh.price)return{sweep:true,type:‘Sell-side’,level:sh.price,desc:`ทะลุ H@${sh.price.toFixed(0)} แล้วกลับ`};}
+for(const sl of rL){if(prev.l<sl.price&&cur.c>sl.price)return{sweep:true,type:‘Buy-side’,level:sl.price,desc:`ทะลุ L@${sl.price.toFixed(0)} แล้วกลับ`};}
+const swH=rH.length?Math.max(…rH.map(s=>s.price)):null;
+const swL=rL.length?Math.min(…rL.map(s=>s.price)):null;
+if(swH&&Math.abs(price-swH)/swH<0.001)return{sweep:true,type:‘Sell-side’,level:swH,desc:`ใกล้ H@${swH.toFixed(0)}`};
+if(swL&&Math.abs(price-swL)/swL<0.001)return{sweep:true,type:‘Buy-side’,level:swL,desc:`ใกล้ L@${swL.toFixed(0)}`};
+return{sweep:false,type:null,level:null,desc:‘ไม่มี Sweep’};
+}
+function calcFib(sw,trend){
+const hs=sw.filter(s=>s.type===‘H’),ls=sw.filter(s=>s.type===‘L’);
+if(!hs.length||!ls.length)return null;
+const swH=Math.max(…hs.slice(-5).map(s=>s.price));
+const swL=Math.min(…ls.slice(-5).map(s=>s.price));
+const range=swH-swL;
+if(trend===‘UPTREND’){
+const f618=swH-range*0.618,f786=swH-range*0.786;
+return{dir:‘UP’,high:swH,low:swL,f50:swH-range*0.5,f618,f786,
+goldZone:[Math.min(f618,f786),Math.max(f618,f786)]};
+}else{
+const f618=swL+range*0.618,f786=swL+range*0.786;
+return{dir:‘DOWN’,high:swH,low:swL,f50:swL+range*0.5,f618,f786,
+goldZone:[Math.min(f618,f786),Math.max(f618,f786)]};
+}
+}
+
+// ── Order Block Detection ──────────────────────────────────
+// Bullish OB: last bearish candle before a strong bullish move (BOS up)
+// Bearish OB: last bullish candle before a strong bearish move (BOS down)
+function detectOrderBlocks(candles,sw){
+const obs=[];
+// Find BOS points to anchor OBs
+const hs=sw.filter(s=>s.lbl===‘HH’).slice(-3);
+const ls=sw.filter(s=>s.lbl===‘LL’).slice(-3);
+// Bearish OB: last bull candle before LL break
+for(const ll of ls){
+// Look back from ll.idx for last bull candle
+for(let i=ll.idx-1;i>=Math.max(0,ll.idx-15);i–){
+const c=candles[i];
+if(c&&c.c>c.o){
+obs.push({type:‘BEAR’,top:c.h,bot:c.l,open:c.o,close:c.c,idx:i,anchor:ll.price,t:c.t});
+break;
+}
+}
+}
+// Bullish OB: last bear candle before HH break
+for(const hh of hs){
+for(let i=hh.idx-1;i>=Math.max(0,hh.idx-15);i–){
+const c=candles[i];
+if(c&&c.c<c.o){
+obs.push({type:‘BULL’,top:c.h,bot:c.l,open:c.o,close:c.c,idx:i,anchor:hh.price,t:c.t});
+break;
+}
+}
+}
+// Keep only fresh OBs (price hasn’t passed through them yet)
+const price=S.gold||0;
+return obs.filter(ob=>{
+if(ob.type===‘BULL’)return price>ob.bot; // price above bottom = fresh
+if(ob.type===‘BEAR’)return price<ob.top; // price below top = fresh
+return true;
+}).slice(-4); // keep last 4
+}
+
+// ── Fair Value Gap Detection ───────────────────────────────
+// FVG: candle[i-1].high < candle[i+1].low (bullish gap)
+//       candle[i-1].low  > candle[i+1].high (bearish gap)
+function detectFVG(candles){
+const fvgs=[];
+for(let i=1;i<candles.length-1;i++){
+const prev=candles[i-1],cur=candles[i],next=candles[i+1];
+// Bullish FVG
+if(prev.h<next.l){
+fvgs.push({type:‘BULL’,top:next.l,bot:prev.h,mid:(next.l+prev.h)/2,idx:i,t:cur.t});
+}
+// Bearish FVG
+if(prev.l>next.h){
+fvgs.push({type:‘BEAR’,top:prev.l,bot:next.h,mid:(prev.l+next.h)/2,idx:i,t:cur.t});
+}
+}
+// Filter: only fresh (price hasn’t closed through them)
+const price=S.gold||0;
+return fvgs.filter(g=>{
+if(g.type===‘BULL’)return price>g.bot&&price<g.top*1.03;
+if(g.type===‘BEAR’)return price<g.top&&price>g.bot*0.97;
+return true;
+}).slice(-4);
+}
+
+// ── Full SMC Analysis ──────────────────────────────────────
+function computeSMC(){
+if(!S.gold) return null;
+// Use cache if price hasn’t changed much
+if(S.smcCache&&Math.abs(S.smcCache.price-S.gold)<0.5) return S.smcCache;
+
+const price=S.gold;
+function analyzeTF(tf,pivot){
+const candles=getCandles(tf);
+const sw=detectSwings(candles,pivot);
+const lab=labelSwings(sw);
+const trend=detectTrend(lab);
+const choch=detectCHoCH(lab,price);
+const bos=detectBOS(lab,price);
+const liq=detectLiqSweep(sw,price,candles);
+const fib=calcFib(sw,trend);
+const obs=detectOrderBlocks(candles,lab);
+const fvgs=detectFVG(candles);
+const inGolden=fib?(price>=fib.goldZone[0]&&price<=fib.goldZone[1]):false;
+// Check if price is in any OB
+const inBullOB=obs.some(ob=>ob.type===‘BULL’&&price>=ob.bot&&price<=ob.top);
+const inBearOB=obs.some(ob=>ob.type===‘BEAR’&&price>=ob.bot&&price<=ob.top);
+// Check if price is in any FVG
+const inBullFVG=fvgs.some(g=>g.type===‘BULL’&&price>=g.bot&&price<=g.top);
+const inBearFVG=fvgs.some(g=>g.type===‘BEAR’&&price>=g.bot&&price<=g.top);
+return{tf,candles,sw,lab,trend,choch,bos,liq,fib,obs,fvgs,inGolden,inBullOB,inBearOB,inBullFVG,inBearFVG,last5:lab.slice(-5)};
+}
+const tf4H=analyzeTF(‘4H’,4);
+const tf1H=analyzeTF(‘1H’,3);
+const tf15m=analyzeTF(‘15m’,3);
+
+// Multi-TF alignment
+const tHTF=tf4H.trend,tMTF=tf1H.trend,tLTF=tf15m.trend;
+const bullAlign=tHTF===‘UPTREND’&&(tMTF===‘UPTREND’||tLTF===‘UPTREND’);
+const bearAlign=tHTF===‘DOWNTREND’&&(tMTF===‘DOWNTREND’||tLTF===‘DOWNTREND’);
+let allow=‘WAIT’;
+if(bullAlign)allow=‘BUY’;else if(bearAlign)allow=‘SELL’;
+
+// Primary CHoCH/BOS from 1H, fallback 4H
+const choch=tf1H.choch.choch?tf1H.choch:tf4H.choch;
+const bos=tf1H.bos.bos?tf1H.bos:tf4H.bos;
+// Liq: prefer 1H
+const liq=tf1H.liq.sweep?tf1H.liq:tf4H.liq.sweep?tf4H.liq:tf15m.liq.sweep?tf15m.liq:tf1H.liq;
+// Fib + OB + FVG from 4H (HTF)
+const fib=tf4H.fib||tf1H.fib;
+const inGolden=fib?(price>=fib.goldZone[0]&&price<=fib.goldZone[1]):false;
+const obs4H=tf4H.obs,fvgs4H=tf4H.fvgs;
+const inBullOB=obs4H.some(o=>o.type===‘BULL’&&price>=o.bot&&price<=o.top)||tf1H.inBullOB;
+const inBearOB=obs4H.some(o=>o.type===‘BEAR’&&price>=o.bot&&price<=o.top)||tf1H.inBearOB;
+const inFVG=tf4H.inBullFVG||tf4H.inBearFVG||tf1H.inBullFVG||tf1H.inBearFVG;
+
+// Confidence
+let conf=0,reasons=[];
+if(tHTF!==‘SIDEWAY’){conf+=25;reasons.push(’HTF ’+tHTF);}
+if(bullAlign||bearAlign){conf+=20;reasons.push(‘MTF aligned’);}
+if(liq.sweep){conf+=15;reasons.push(’Liq Sweep ’+liq.type);}
+if(choch.choch){conf+=15;reasons.push(’CHoCH ’+choch.dir);}
+if(bos.bos){conf+=10;reasons.push(’BOS ’+bos.dir);}
+if(inGolden){conf+=10;reasons.push(‘Golden Zone’);}
+if(inBullOB&&allow===‘BUY’){conf+=10;reasons.push(‘In Bull OB’);}
+if(inBearOB&&allow===‘SELL’){conf+=10;reasons.push(‘In Bear OB’);}
+if(inFVG){conf+=5;reasons.push(‘In FVG’);}
+conf=Math.min(conf,100);
+
+let signal=‘WAIT’;
+if(conf>=45&&allow!==‘WAIT’)signal=allow;
+else if(conf>=30&&tHTF!==‘SIDEWAY’)signal=tHTF===‘UPTREND’?‘BUY’:‘SELL’;
+
+const result={price,signal,allow,conf,reason:reasons.join(’ · ’),
+tHTF,tMTF,tLTF,choch,bos,liq,fib,inGolden,obs4H,fvgs4H,inBullOB,inBearOB,inFVG,
+tf4H,tf1H,tf15m,last5:tf4H.last5};
+S.smcCache=result;
+return result;
+}
+
+// ─── Main Compute ──────────────────────────────────────────
+function compute(){
+if(!S.gold)return null;
+const m=MODES[S.mode],w=m.w,g=S.gold,d=S.dxy;
+const hasDXY=d!==null&&d!==undefined;
+let sc={smc:0,fib:0,ob:0,corr:0,vol:0};
+
+// Get SMC data
+const smc=computeSMC();
+const trend=smc?.tHTF||‘SIDEWAY’;
+
+// Fib from 4H
+const fib=smc?.fib;
+let fH=S.gold*1.01,fL=S.gold*0.99,fibRange=S.gold*0.02;
+let f618=fH-fibRange*0.618,f786=fH-fibRange*0.786;
+let goldenLow,goldenHigh;
+if(fib){fH=fib.high;fL=fib.low;fibRange=fH-fL;f618=fib.f618;f786=fib.f786;goldenLow=fib.goldZone[0];goldenHigh=fib.goldZone[1];}
+else{goldenLow=Math.min(f618,f786);goldenHigh=Math.max(f618,f786);}
+
+// SMC score
+const bos=smc?.bos?.bos||false,choch=smc?.choch?.choch||false,liqSweep=smc?.liq?.sweep||false;
+if(trend!==‘SIDEWAY’)sc.smc+=Math.round(w.smc*0.4);
+if(choch)sc.smc+=Math.round(w.smc*0.3);
+if(bos)sc.smc+=Math.round(w.smc*0.2);
+if(liqSweep)sc.smc+=Math.round(w.smc*0.1);
+sc.smc=Math.min(sc.smc,w.smc);
+
+// Fib score
+const inGolden=g>=goldenLow&&g<=goldenHigh;
+const nearGolden=!inGolden&&Math.min(Math.abs(g-goldenLow),Math.abs(g-goldenHigh))<fibRange*0.12;
+if(inGolden)sc.fib+=Math.round(w.fib*0.8);
+else if(nearGolden)sc.fib+=Math.round(w.fib*0.4);
+else if(g>=fL&&g<=fH)sc.fib+=Math.round(w.fib*0.2);
+sc.fib=Math.min(sc.fib,w.fib);
+
+// Order Block + FVG score (new in v9)
+const inBullOB=smc?.inBullOB||false,inBearOB=smc?.inBearOB||false,inFVG=smc?.inFVG||false;
+if(inBullOB&&(trend===‘UPTREND’||trend===‘SIDEWAY’))sc.ob+=Math.round(w.ob*0.6);
+if(inBearOB&&(trend===‘DOWNTREND’||trend===‘SIDEWAY’))sc.ob+=Math.round(w.ob*0.6);
+if(inFVG)sc.ob+=Math.round(w.ob*0.4);
+sc.ob=Math.min(sc.ob,w.ob);
+
+// DXY Correlation
+let dBull=false,dBear=false,al=false;
+if(hasDXY){
+dBull=d>99.5;dBear=d<99.0;
+const sellA=dBull&&trend===‘DOWNTREND’,buyA=dBear&&trend===‘UPTREND’;
+al=sellA||buyA;
+if(al)sc.corr+=Math.round(w.corr*0.7);
+else if(trend!==‘SIDEWAY’)sc.corr+=Math.round(w.corr*0.4);
+if(dBull||dBear)sc.corr+=Math.round(w.corr*0.1);
+sc.corr=Math.min(sc.corr,w.corr);
+}else{if(trend!==‘SIDEWAY’)sc.corr=Math.round(w.corr*0.3);}
+
+const se=sess();
+sc.vol=Math.min(Math.round(se.pts/20*w.vol),w.vol);
+
+const tot=sc.smc+sc.fib+sc.ob+sc.corr+sc.vol;
+
+// Side
+let side=‘WAIT’;
+const passScore=tot>=m.minScore;
+const passSMC=bos||choch||trend!==‘SIDEWAY’;
+if(passScore&&passSMC){
+if(trend===‘DOWNTREND’)side=‘SELL’;
+else if(trend===‘UPTREND’)side=‘BUY’;
+}
+
+// SL/TP — try OB level first, then liq level, then %
+const entry=g,isSell=side===‘SELL’;
+let sl,tp1,tp2,slSrc=’%’;
+// Try: SL above nearest Bear OB (SELL) or below Bull OB (BUY)
+const obs=smc?.obs4H||[];
+const relevantOB=isSell?obs.filter(o=>o.type===‘BEAR’&&o.top>entry).sort((a,b)=>a.top-b.top)[0]
+:obs.filter(o=>o.type===‘BULL’&&o.bot<entry).sort((a,b)=>b.bot-a.bot)[0];
+if(relevantOB){
+if(isSell){sl=relevantOB.top*1.0005;slSrc=‘Bear OB’;}
+else{sl=relevantOB.bot*0.9995;slSrc=‘Bull OB’;}
+}else if(smc?.liq?.level&&smc.liq.sweep){
+const lv=smc.liq.level;
+sl=isSell?Math.max(lv,entry)*1.001:Math.min(lv,entry)*0.999;
+slSrc=‘Liq Level’;
+}else{sl=isSell?entry*(1+m.slPct/100):entry*(1-m.slPct/100);slSrc=’%SL’;}
+
+tp1=isSell?entry*(1-m.tp1Pct/100):entry*(1+m.tp1Pct/100);
+tp2=isSell?entry*(1-m.tp2Pct/100):entry*(1+m.tp2Pct/100);
+// Safety clamp
+if(isSell){sl=Math.max(sl,entry*1.001);tp1=Math.min(tp1,entry*0.999);tp2=Math.min(tp2,entry*0.998);}
+else{sl=Math.min(sl,entry*0.999);tp1=Math.max(tp1,entry*1.001);tp2=Math.max(tp2,entry*1.002);}
+const rr=Math.abs(entry-tp1)/Math.abs(entry-sl)||0;
+
+// Zones
+const zR=`${goldenHigh.toFixed(0)}–${(goldenHigh+fibRange*0.03).toFixed(0)}`;
+const zE=`${goldenLow.toFixed(0)}–${goldenHigh.toFixed(0)}`;
+const zS=`${fL.toFixed(0)}–${(fL+fibRange*0.04).toFixed(0)}`;
+
+return{tot,sc,side,entry,sl,tp1,tp2,rr,slSrc,
+bos,choch,inGolden,al,liqSweep,inBullOB,inBearOB,inFVG,
+dBull,dBear,se,fH,fL,f618,f786,goldenLow,goldenHigh,g,d:d||0,
+trend,zR,zE,zS,smc,hasDXY,passScore,passSMC};
+}
+
+// ─── Render ───────────────────────────────────────────────
+function render(){
+const r=compute();if(!r)return;
+const m=MODES[S.mode],w=m.w,now=new Date().toLocaleTimeString(‘th-TH’,{hour:‘2-digit’,minute:‘2-digit’});
+const gC=S.goldCh||0,gP=S.goldChp||0;
+document.getElementById(‘gP’).textContent=S.gold.toLocaleString(‘en-US’,{minimumFractionDigits:2,maximumFractionDigits:2});
+const ge=document.getElementById(‘gC’);
+ge.textContent=`${gC>=0?'▲':'▼'} ${Math.abs(gC).toFixed(2)} (${Math.abs(gP).toFixed(2)}%)`;
+ge.className=‘pc2 ‘+(gC>=0?‘up’:‘dn’);
+document.getElementById(‘gT’).textContent=‘🟢 ‘+now;
+const dC=S.dxyPrev?r.d-S.dxyPrev:0,dPp=S.dxyPrev?dC/S.dxyPrev*100:0;
+document.getElementById(‘dP’).textContent=r.d.toFixed(3)+(S.dxyManual!==null?’ ✎’:’’);
+const de=document.getElementById(‘dC’);
+de.textContent=`${dC>=0?'▲':'▼'} ${Math.abs(dC).toFixed(3)} (${Math.abs(dPp).toFixed(2)}%)`;
+de.className=‘pc2 ‘+(dC>=0?‘up’:‘dn’);
+document.getElementById(‘dT’).textContent=‘🟢 ‘+now;
+spk(‘sk1’,S.goldSpk,’#ffd44d’);spk(‘sk2’,S.dxySpk,’#18eeff’);
+
+// Dial
+const arc=document.getElementById(‘dArc’);
+arc.style.strokeDashoffset=283-(r.tot/100)*283;
+arc.style.stroke=r.side===‘SELL’?‘url(#gS)’:r.side===‘BUY’?‘url(#gB)’:‘var(–gold)’;
+animN(‘dNum’,r.tot,1000);
+document.getElementById(‘dNum’).style.color=r.tot>=75?‘var(–red)’:r.tot>=50?‘var(–gold)’:‘var(–cyan)’;
+document.getElementById(‘mLbl’).textContent=m.label;
+
+// Score bars
+document.getElementById(‘sBars’).innerHTML=[
+{n:‘SMC’,max:w.smc,v:r.sc.smc,c:’#ffd44d’},
+{n:‘FIB’,max:w.fib,v:r.sc.fib,c:’#c97fff’},
+{n:‘OB+FVG’,max:w.ob,v:r.sc.ob,c:’#ff9500’},
+{n:‘DXY’,max:w.corr,v:r.sc.corr,c:’#18eeff’},
+{n:‘SESSION’,max:w.vol,v:r.sc.vol,c:’#00ffaa’},
+].map(b=>`<div class="sb3"><div class="sbn">${b.n}</div> <div class="sbt"><div class="sbf" style="width:${b.v/b.max*100}%;background:${b.c}"></div></div> <div class="sbv" style="color:${b.c}">${b.v}</div></div>`).join(’’);
+
+// Signal banner
+const sb=document.getElementById(‘sigB’);
+if(r.tot>=m.minScore){
+sb.className=`sig show ${r.side==='SELL'?'sell':r.side==='BUY'?'buy':'wait'}`;
+document.getElementById(‘sigT’).textContent=r.side===‘SELL’?‘🔴 SELL SIGNAL’:r.side===‘BUY’?‘🟢 BUY SIGNAL’:‘⚡ MONITOR’;
+document.getElementById(‘sigS’).textContent=`${r.tot}/100 · ${m.label} · R:R ${r.rr.toFixed(1)}`;
+document.getElementById(‘sigN’).textContent=r.tot;
+if(S.alarmOn)alarm();
+}else sb.classList.remove(‘show’);
+
+// Conditions
+document.getElementById(‘cList’).innerHTML=[
+{name:`SMC Trend (HTF 4H)`,ico:r.trend!==‘SIDEWAY’?‘✅’:‘❌’,cls:r.trend!==‘SIDEWAY’?‘pass’:‘fail’,
+desc:‘HH/HL/LH/LL Pivot-9 จาก OHLC จริง’,val:`Trend: ${r.trend} · BOS:${r.bos?'✓':'✗'} CHoCH:${r.choch?'✓':'✗'}`},
+{name:‘Order Block (4H+1H)’,ico:(r.inBullOB||r.inBearOB)?‘✅’:‘⚠️’,cls:(r.inBullOB||r.inBearOB)?‘pass’:‘warn’,
+desc:‘แท่งสุดท้ายก่อน BOS — สถาบันวางออร์เดอร์’,val:`Bull OB:${r.inBullOB?'✓':'✗'} · Bear OB:${r.inBearOB?'✓':'✗'}`},
+{name:‘Fair Value Gap (FVG)’,ico:r.inFVG?‘✅’:‘⚠️’,cls:r.inFVG?‘pass’:‘warn’,
+desc:‘ช่องว่างราคา 3 แท่ง ตลาดมักกลับมาเติม’,val:`ราคา ${r.inFVG?'✓ อยู่ใน FVG':'ยังไม่ถึง FVG'}`},
+{name:‘Liquidity Sweep’,ico:r.liqSweep?‘✅’:‘⚠️’,cls:r.liqSweep?‘pass’:‘warn’,
+desc:‘ทะลุ High/Low เดิม แล้วกลับ = กวาด Stop’,val:r.smc?.liq?.desc||‘ไม่มี Sweep’},
+{name:‘Fibonacci Golden Zone’,ico:r.inGolden?‘✅’:‘⚠️’,cls:r.inGolden?‘pass’:‘warn’,
+desc:`61.8%=${r.f618.toFixed(0)} – 78.6%=${r.f786.toFixed(0)} (4H OHLC จริง)`,
+val:`${r.g.toFixed(2)} ${r.inGolden?'✓ IN ZONE':'ยังไม่ถึง'}`},
+{name:‘DXY Correlation’,ico:(r.hasDXY&&r.al)?‘✅’:r.hasDXY?‘⚠️’:‘❌’,cls:(r.hasDXY&&r.al)?‘pass’:r.hasDXY?‘warn’:‘fail’,
+desc:r.hasDXY?‘DXY >99.5 = Bear Gold · DXY <99 = Bull Gold’:‘รอข้อมูล DXY’,
+val:r.hasDXY?`DXY ${r.d.toFixed(3)} ${r.al?'✓ ALIGNED':'MIXED'}`:‘รอ DXY…’},
+{name:`Session · ${r.se.name}`,ico:r.se.ok?‘✅’:‘⚠️’,cls:r.se.ok?‘pass’:‘warn’,
+desc:‘London/NY = High Vol · ดีที่สุดสำหรับเทรด’,val:`${r.se.name} · ${r.se.pts}/20pts`},
+{name:`Score ≥ ${m.minScore}pts`,ico:r.tot>=m.minScore?‘✅’:‘❌’,cls:r.tot>=m.minScore?‘pass’:‘fail’,
+desc:`Mode ${m.label} ต้องการ ≥ ${m.minScore} จาก 100`,val:`${r.tot}/100 ${r.tot>=m.minScore?'✓ PASS':'✗ FAIL'}`},
+].map(c=>`<div class="ci2 ${c.cls}"><div class="cico">${c.ico}</div> <div><div class="cname">${c.name}</div><div class="cdesc">${c.desc}</div> <div class="cval">${c.val}</div></div></div>`).join(’’);
+
+// Decision tree
+const tCol=t=>t===‘UPTREND’?‘var(–green)’:t===‘DOWNTREND’?‘var(–red)’:‘var(–gold)’;
+document.getElementById(‘dTree’).innerHTML=`
+
+<div class="dn4 dnt">📌 ${m.label} MIN:${m.minScore}pts R:R≥${m.rrMin} · ${S.apiKey?'🟢 REAL OHLC':'🟡 SYNTHETIC'}</div>
+<div class="dn4 di">HTF 4H: <b style="color:${tCol(r.trend)}">${r.trend}</b></div>
+<div class="dn4 di" style="margin-left:10px">CHoCH: ${r.choch?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--muted)">✗</span>'} · BOS: ${r.bos?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--muted)">✗</span>'}</div>
+<div class="dn4 di" style="margin-left:10px">OB: ${(r.inBullOB||r.inBearOB)?'<span style="color:var(--orange)">✓ IN OB</span>':'<span style="color:var(--muted)">ไม่อยู่</span>'} · FVG: ${r.inFVG?'<span style="color:var(--orange)">✓</span>':'<span style="color:var(--muted)">✗</span>'}</div>
+<div class="dn4 di" style="margin-left:10px">Liq: ${r.liqSweep?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--muted)">✗</span>'} · GZ: ${r.inGolden?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--muted)">✗</span>'}</div>
+<div class="dn4 di">Score: ${r.tot}/100 ${r.passScore?'<span style="color:var(--green)">✓PASS</span>':'<span style="color:var(--red)">✗FAIL</span>'}</div>
+<div class="dn4 dth">→ FINAL: <b style="color:${r.side==='BUY'?'var(--green)':r.side==='SELL'?'var(--red)':'var(--gold)'}">${r.side}</b></div>
+<div class="dn4 dnt">📡 Fetch#${S.fetchN} · ${S.lastFetch?.toLocaleTimeString('th-TH')||'--'}</div>`;
+
+// Formula
+document.getElementById(‘fBox’).innerHTML=`
+
+<div style="color:var(--muted);margin-bottom:6px">SCORE = SMC + FIB + OB/FVG + DXY + SESSION</div>
+<div class="fl"><span style="color:var(--muted)">SMC (Pivot-9) max=${w.smc}</span><span class="fp go">${r.sc.smc}pts</span></div>
+<div class="fl"><span style="color:var(--muted)">Fibonacci max=${w.fib}</span><span class="fp pu">${r.sc.fib}pts</span></div>
+<div class="fl"><span style="color:var(--muted)">Order Block+FVG max=${w.ob}</span><span class="fp or">${r.sc.ob}pts</span></div>
+<div class="fl"><span style="color:var(--muted)">DXY Corr max=${w.corr}</span><span class="fp cy">${r.sc.corr}pts</span></div>
+<div class="fl"><span style="color:var(--muted)">Session(${r.se.name}) max=${w.vol}</span><span class="fp gr">${r.sc.vol}pts</span></div>
+<div class="fl tot"><span style="color:var(--text)">TOTAL</span><span class="fp big go">${r.tot}/100</span></div>
+<div style="margin-top:6px;font-size:10px;color:var(--muted)">SL source: ${r.slSrc} · TP1=${m.tp1Pct}% TP2=${m.tp2Pct}%</div>`;
+
+// Zones
+document.getElementById(‘zR’).textContent=r.zR;
+document.getElementById(‘zE’).textContent=r.zE;
+document.getElementById(‘zS’).textContent=r.zS;
+
+// Trade plan
+const ts=document.getElementById(‘trSide’);
+if(r.side===‘SELL’){ts.textContent=‘● SELL’;ts.className=‘tr-s ts-sell’;}
+else if(r.side===‘BUY’){ts.textContent=‘● BUY’;ts.className=‘tr-s ts-buy’;}
+else{ts.textContent=‘◌ WAIT’;ts.className=‘tr-s ts-wait’;}
+document.getElementById(‘tSL’).textContent=r.sl.toFixed(0);
+document.getElementById(‘tEN’).textContent=r.entry.toFixed(0);
+document.getElementById(‘tTP’).textContent=r.tp1.toFixed(0);
+document.getElementById(‘rrR’).textContent=`1:${r.rr.toFixed(1)}`;
+document.getElementById(‘rrT2’).textContent=r.tp2.toFixed(0);
+const v=r.rr>=m.rrMin;
+document.getElementById(‘rrV’).textContent=v?‘VALID✓’:‘LOW✗’;
+document.getElementById(‘rrV’).style.color=v?‘var(–green)’:‘var(–red)’;
+document.getElementById(‘execNote’).innerHTML=`SL: ${r.slSrc} · TF: 4H+1H<br>${(r.side==='SELL'?r.sl>r.entry:r.sl<r.entry)?'<span style="color:var(--green)">✓ SL ถูกทิศ</span>':'<span style="color:var(--red)">⚠️ รอสัญญาณใหม่</span>'}`;
+document.getElementById(‘execSrc’).textContent=r.slSrc;
+
+// Filters
+document.getElementById(‘fGrid’).innerHTML=`
+
+<div class="fi"><div class="fil">DATA</div><div class="fiv ok">LIVE✓</div><div class="fin">Fetch#${S.fetchN}</div></div>
+<div class="fi"><div class="fil">OHLC</div><div class="fiv ${S.apiKey?'ok':'warn'}">${S.apiKey?'REAL':'SYNTH'}</div><div class="fin">${S.apiKey?'API Ninjas':'ไม่มี Key'}</div></div>
+<div class="fi"><div class="fil">SESSION</div><div class="fiv" style="color:${r.se.col}">${r.se.name}</div><div class="fin">${r.se.ok?'High Vol':'Low Vol'}</div></div>
+<div class="fi"><div class="fil">OB+FVG</div><div class="fiv ${(r.inBullOB||r.inBearOB||r.inFVG)?'ok':'bad'}">${(r.inBullOB||r.inBearOB||r.inFVG)?'IN ZONE':'NONE'}</div><div class="fin">${r.inBullOB?'Bull OB ':r.inBearOB?'Bear OB ':r.inFVG?'FVG ':''}ตรวจ 4H+1H</div></div>`;
+
+// Log
+const now2=new Date().toLocaleTimeString(‘en-GB’,{hour:‘2-digit’,minute:‘2-digit’,second:‘2-digit’});
+const logs=[
+`<span class="gr">LIVE</span> Gold=<span class="g">${r.g.toFixed(2)}</span> DXY=${r.hasDXY?`<span class="c">${r.d.toFixed(3)}</span>`:'<span style="color:var(--muted)">—</span>'} Score:<span class="g">${r.tot}/100</span> → <span class="${r.side==='SELL'?'r':r.side==='BUY'?'gr':'g'}">${r.side}</span>`,
+`HTF: <span class="${r.trend==='UPTREND'?'gr':'r'}">${r.trend}</span> · BOS:<span class="${r.bos?'gr':'muted'}">${r.bos?'✓':'✗'}</span> CHoCH:<span class="${r.choch?'gr':'muted'}">${r.choch?'✓':'✗'}</span> Liq:<span class="${r.liqSweep?'gr':'muted'}">${r.liqSweep?'✓':'✗'}</span>`,
+`OB: Bull<span class="${r.inBullOB?'gr':'muted'}">${r.inBullOB?'✓':'✗'}</span> Bear<span class="${r.inBearOB?'or':'muted'}">${r.inBearOB?'✓':'✗'}</span> · FVG:<span class="${r.inFVG?'or':'muted'}">${r.inFVG?'✓':'✗'}</span> · GZ:<span class="${r.inGolden?'gr':'muted'}">${r.inGolden?'✓':'✗'}</span>`,
+`R:R=<span class="g">1:${r.rr.toFixed(1)}</span> SL(${r.slSrc})=${r.sl.toFixed(0)} TP1=${r.tp1.toFixed(0)} TP2=${r.tp2.toFixed(0)}`,
+];
+document.getElementById(‘logW’).innerHTML=logs.map(l=>`<div class="le"><div class="let">${now2}</div><div class="lem">${l}</div></div>`).join(’’);
+document.getElementById(‘logC’).textContent=logs.length+’ entries’;
+
+renderSMC(r);
+}
+
+// ─── Render SMC Panel ──────────────────────────────────────
+function renderSMC(r){
+const smc=r?.smc||computeSMC();
+if(!smc)return;
+const tCol=t=>t===‘UPTREND’?‘var(–green)’:t===‘DOWNTREND’?‘var(–red)’:‘var(–gold)’;
+const tIco=t=>t===‘UPTREND’?‘▲’:t===‘DOWNTREND’?‘▼’:‘↔’;
+
+// SWING H/L
+document.getElementById(‘smcSwingContent’).innerHTML=`
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+  <span style="font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace">HTF 4H · Pivot-9 · ${S.apiKey?'REAL OHLC':'Synthetic'}</span>
+  <span style="font-size:12px;font-weight:700;font-family:'Orbitron',sans-serif;color:${tCol(smc.tHTF)}">${tIco(smc.tHTF)} ${smc.tHTF}</span>
+</div>
+${smc.last5.length?smc.last5.map(s=>`
+<div class="sw-row">
+  <span style="font-size:10px;color:var(--muted);min-width:30px">#${s.idx}</span>
+  <span>${s.type==='H'?'▲ High':'▼ Low'} ${s.price.toFixed(1)}</span>
+  <span class="sw-badge ${s.lbl.toLowerCase()}">${s.lbl}</span>
+</div>`).join(''):'<div class="rec-empty">กำลังวิเคราะห์...</div>'}
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-top:8px">
+  ${[{tf:'4H',t:smc.tHTF},{tf:'1H',t:smc.tMTF},{tf:'15m',t:smc.tLTF}].map(x=>`
+  <div style="text-align:center;padding:5px;border-radius:6px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06)">
+    <div style="font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace">${x.tf}</div>
+    <div style="font-size:10px;font-weight:700;color:${tCol(x.t)}">${tIco(x.t)} ${x.t.replace('TREND','')}</div>
+  </div>`).join('')}
+</div>`;
+
+// MULTI-TF
+document.getElementById(‘smcMtfContent’).innerHTML=`
+
+<div class="tf-grid">
+  ${[{label:'4H HTF',sub:'แนวโน้มหลัก',t:smc.tHTF},{label:'1H MTF',sub:'Entry timing',t:smc.tMTF},
+    {label:'15m LTF',sub:'Precision',t:smc.tLTF}].map(x=>`
+  <div class="tf-box ${x.t==='UPTREND'?'bull':x.t==='DOWNTREND'?'bear':'side'}">
+    <div class="tf-lbl">${x.label}</div><div class="tf-val">${tIco(x.t)} ${x.t}</div><div class="tf-sub">${x.sub}</div>
+  </div>`).join('')}
+  <div class="tf-box ${smc.allow==='BUY'?'bull':smc.allow==='SELL'?'bear':'side'}">
+    <div class="tf-lbl">ALLOW</div>
+    <div class="tf-val" style="font-size:14px">${smc.allow==='BUY'?'🟢':smc.allow==='SELL'?'🔴':'⏸'} ${smc.allow}</div>
+    <div class="tf-sub">HTF+MTF aligned</div>
+  </div>
+</div>`;
+
+// CHoCH/BOS
+document.getElementById(‘smcChochContent’).innerHTML=` ${[{tf:'4H',c:smc.tf4H.choch,b:smc.tf4H.bos},{tf:'1H',c:smc.tf1H.choch,b:smc.tf1H.bos},{tf:'15m',c:smc.tf15m.choch,b:smc.tf15m.bos}].map(x=>`
+
+<div class="choch-row ${x.c.choch||x.b.bos?x.c.choch?(x.c.dir==='UP'?'true-up':'true-dn'):'true-up':''}">
+  <span style="font-size:10px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--cyan);min-width:28px">${x.tf}</span>
+  <div style="flex:1">
+    <div class="choch-name">CHoCH: <span style="color:${x.c.choch?'var(--green)':'var(--muted)'}">${x.c.choch?('✓ '+x.c.dir):'—'}</span> · BOS: <span style="color:${x.b.bos?'var(--green)':'var(--muted)'}">${x.b.bos?('✓ '+x.b.dir):'—'}</span></div>
+    <div class="choch-desc">${x.c.desc} · ${x.b.desc}</div>
+  </div>
+</div>`).join('')}
+<div style="margin-top:6px;font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;line-height:1.7;padding:5px 8px;background:rgba(255,255,255,.02);border-radius:6px">
+  📌 CHoCH = เริ่มเปลี่ยน trend · BOS = ยืนยัน · Primary: 1H → Trigger: 15m
+</div>`;
+
+// LIQUIDITY
+document.getElementById(‘smcLiqContent’).innerHTML=` ${[{tf:'4H',liq:smc.tf4H.liq},{tf:'1H',liq:smc.tf1H.liq},{tf:'15m',liq:smc.tf15m.liq}].map(x=>`
+
+<div class="liq-row ${x.liq.sweep?(x.liq.type==='Buy-side'?'sweep-buy':'sweep-sell'):''}">
+  <div>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:var(--cyan)">${x.tf}</span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:${x.liq.sweep?'var(--text)':'var(--muted)'}"> — ${x.liq.sweep?(x.liq.type+' Sweep'):x.liq.desc}</span>
+  </div>
+  <div class="liq-val" style="color:${x.liq.sweep?'var(--gold)':'var(--muted)'}">${x.liq.level?x.liq.level.toFixed(1):'--'}</div>
+</div>`).join('')}
+<div style="margin-top:6px;font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;line-height:1.8;padding:5px 8px;background:rgba(255,255,255,.02);border-radius:6px">
+  🟢 Buy-side = ทะลุ Low แล้วกลับขึ้น · 🔴 Sell-side = ทะลุ High แล้วกลับลง
+</div>`;
+
+// OB + FVG
+const obs=smc.obs4H||[],fvgs=smc.fvgs4H||[];
+document.getElementById(‘smcObContent’).innerHTML=`
+
+<div style="font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:8px">Order Block · Fair Value Gap · HTF 4H</div>
+${obs.length?obs.map(o=>`
+<div class="ob-row ${o.type==='BULL'?'ob-bull':'ob-bear'}">
+  <div>
+    <div class="ob-lbl">${o.type==='BULL'?'🟢 BULL OB':'🔴 BEAR OB'}</div>
+    <div style="font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace">Zone: ${o.bot.toFixed(0)}–${o.top.toFixed(0)}</div>
+  </div>
+  <div class="ob-price">${o.close.toFixed(1)}</div>
+</div>`).join(''):'<div class="rec-empty" style="padding:8px">ไม่มี Order Block ที่ยังสด</div>'}
+<div style="margin:8px 0 6px;font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-weight:600">FAIR VALUE GAPS</div>
+${fvgs.length?fvgs.map(g=>`
+<div class="fvg-row ${g.type==='BULL'?'fvg-bull':'fvg-bear'}">
+  <div>
+    <span class="fvg-tag">${g.type==='BULL'?'BULL FVG':'BEAR FVG'}</span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);margin-left:6px">Zone: ${g.bot.toFixed(0)}–${g.top.toFixed(0)}</span>
+  </div>
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:${g.type==='BULL'?'var(--green)':'var(--red)'}">Mid:${g.mid.toFixed(0)}</div>
+</div>`).join(''):'<div class="rec-empty" style="padding:8px">ไม่มี FVG ที่ยังสด</div>'}
+<div style="margin-top:8px;font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;line-height:1.7;padding:5px 8px;background:rgba(255,255,255,.02);border-radius:6px">
+  📌 OB = แท่งสุดท้ายก่อน BOS — ราคามักกลับมา retest<br>
+  📌 FVG = ช่องว่าง 3 แท่ง — ตลาดมักกลับมาเติม
+</div>`;
+
+// FIB
+const fib=smc.fib;
+const price=S.gold||0;
+document.getElementById(‘smcFibContent’).innerHTML=fib?`
+
+<div style="display:flex;justify-content:space-between;margin-bottom:6px">
+  <span style="font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace">4H HTF · ${S.apiKey?'OHLC จริง':'Synthetic'}</span>
+  <span style="font-size:11px;font-weight:700;color:${tCol(fib.dir==='UP'?'UPTREND':'DOWNTREND')}">${fib.dir==='UP'?'▲ Low→High':'▼ High→Low'}</span>
+</div>
+<div class="fib-row"><span class="fib-lbl">Swing High</span><span class="fib-val" style="color:var(--red)">${fib.high.toFixed(1)}</span></div>
+<div class="fib-row"><span class="fib-lbl">50.0%</span><span class="fib-val" style="color:var(--text)">${fib.f50.toFixed(1)}</span></div>
+<div class="fib-row golden ${Math.abs(price-fib.f618)<5?'at-price':''}"><span class="fib-lbl">61.8% 🏆</span><span class="fib-val">${fib.f618.toFixed(1)}</span></div>
+<div class="fib-row golden ${Math.abs(price-fib.f786)<5?'at-price':''}"><span class="fib-lbl">78.6% ⚡</span><span class="fib-val">${fib.f786.toFixed(1)}</span></div>
+<div class="fib-row"><span class="fib-lbl">Swing Low</span><span class="fib-val" style="color:var(--green)">${fib.low.toFixed(1)}</span></div>
+<div style="margin-top:8px;padding:6px 9px;border-radius:7px;background:rgba(255,212,77,.08);border:1px solid rgba(255,212,77,.25)">
+  <div style="font-size:10px;color:var(--gold);font-family:'IBM Plex Mono',monospace">🎯 Golden Zone: ${fib.goldZone[0].toFixed(1)} – ${fib.goldZone[1].toFixed(1)}</div>
+  <div style="font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:2px">ราคา ${smc.inGolden?'<span style="color:var(--green)">✅ อยู่ใน Golden Zone</span>':'ยังไม่ถึง'}</div>
+</div>`:'<div class="rec-empty">ข้อมูลไม่พอ</div>';
+
+// FINAL
+const sc=r||compute();
+const checks=[
+[‘HTF 4H Trend’,smc.tHTF!==‘SIDEWAY’,smc.tHTF],
+[‘MTF Aligned’,smc.allow!==‘WAIT’,`${smc.tHTF}+${smc.tMTF}`],
+[‘Order Block’,sc?.inBullOB||sc?.inBearOB?true:false,sc?.inBullOB?‘Bull OB ✓’:sc?.inBearOB?‘Bear OB ✓’:‘ไม่อยู่ใน OB’],
+[‘Fair Value Gap’,smc.tf4H.inBullFVG||smc.tf4H.inBearFVG,smc.tf4H.inBullFVG?‘Bull FVG ✓’:smc.tf4H.inBearFVG?‘Bear FVG ✓’:‘ไม่มี FVG’],
+[‘CHoCH (1H)’,smc.choch.choch,smc.choch.desc],
+[‘BOS (1H)’,smc.bos.bos,smc.bos.desc],
+[‘Liquidity Sweep’,smc.liq.sweep,smc.liq.desc],
+[‘Golden Zone 4H’,smc.inGolden,smc.inGolden?‘ราคาอยู่ใน GZ’:‘ยังไม่ถึง’],
+];
+const sigCol=smc.signal===‘BUY’?‘var(–green)’:smc.signal===‘SELL’?‘var(–red)’:‘var(–gold)’;
+document.getElementById(‘smcFinalContent’).innerHTML=`
+
+<div style="text-align:center;padding:10px 0 8px">
+  <div style="font-size:22px;font-weight:900;font-family:'Orbitron',sans-serif;color:${sigCol}">${smc.signal==='BUY'?'🟢 BUY':smc.signal==='SELL'?'🔴 SELL':'⏸ WAIT'}</div>
+  <span style="font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--purple)">SMC Score: ${smc.conf}/100</span>
+</div>
+${checks.map(([n,ok,v])=>`
+<div class="choch-row ${ok?'true-up':''}">
+  <span style="font-size:14px">${ok?'✅':'❌'}</span>
+  <div style="flex:1"><div class="choch-name">${n}</div><div class="choch-desc">${v}</div></div>
+</div>`).join('')}
+<div style="margin-top:8px;font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;padding:6px 9px;background:rgba(255,255,255,.02);border-radius:6px;line-height:1.7">
+  ${smc.reason||'รอเงื่อนไขครบ...'}
+</div>`;
+}
+
+// ─── AUTO BACKTEST ─────────────────────────────────────────
+async function runBacktest(){
+if(!S.apiKey){showToast(‘⚠️ ต้องมี API Key ก่อน Backtest’);return;}
+const btn=document.getElementById(‘btRunBtn’);
+btn.disabled=true;btn.textContent=‘⏳ กำลัง fetch…’;
+const log=document.getElementById(‘btLog’);
+log.textContent=‘กำลังดึง OHLC 4H 500 แท่ง…’;
+try{
+// Fetch 500 4H candles
+await fetchOHLC(‘4H’,500);
+const candles=S.candles[‘4H’]||[];
+if(candles.length<50){log.textContent=‘❌ ข้อมูลไม่พอ (ต้องการ ≥ 50 แท่ง)’;btn.disabled=false;btn.textContent=‘▶ RUN BACKTEST’;return;}
+log.textContent=`✅ ได้ ${candles.length} แท่ง · กำลัง backtest...`;
+const m=MODES[S.mode];
+let total=0,wins=0,losses=0,rrSum=0;
+const logLines=[];
+// Walk-forward: start from candle 50, look forward for result
+const pivot=4;
+for(let i=50;i<candles.length-10;i++){
+const slice=candles.slice(0,i+1);
+const cur=slice[i];
+// Run SMC on slice
+const sw=detectSwings(slice,pivot);
+const lab=labelSwings(sw);
+const trend=detectTrend(lab);
+if(trend===‘SIDEWAY’)continue;
+const choch=detectCHoCH(lab,cur.c);
+const bos=detectBOS(lab,cur.c);
+const liq=detectLiqSweep(sw,cur.c,slice);
+const fib=calcFib(sw,trend);
+const obs=detectOrderBlocks(slice,lab);
+const fvgs=detectFVG(slice);
+const inGolden=fib?(cur.c>=fib.goldZone[0]&&cur.c<=fib.goldZone[1]):false;
+const inOB=obs.some(o=>(o.type===‘BULL’&&cur.c>=o.bot&&cur.c<=o.top)||(o.type===‘BEAR’&&cur.c>=o.bot&&cur.c<=o.top));
+const inFVG=fvgs.some(g=>(g.type===‘BULL’&&cur.c>=g.bot&&cur.c<=g.top)||(g.type===‘BEAR’&&cur.c>=g.bot&&cur.c<=g.top));
+// Simple score
+let sc=0;
+if(trend!==‘SIDEWAY’)sc+=30;
+if(choch.choch)sc+=20;
+if(bos.bos)sc+=15;
+if(liq.sweep)sc+=15;
+if(inGolden)sc+=10;
+if(inOB)sc+=10;
+if(sc<m.minScore)continue;
+// Determine side
+const side=trend===‘UPTREND’?‘BUY’:‘SELL’;
+// SL/TP
+const entry=cur.c,isSell=side===‘SELL’;
+const sl=isSell?entry*(1+m.slPct/100):entry*(1-m.slPct/100);
+const tp=isSell?entry*(1-m.tp1Pct/100):entry*(1+m.tp1Pct/100);
+const rr=Math.abs(entry-tp)/Math.abs(entry-sl);
+if(rr<m.rrMin)continue;
+// Check forward candles for outcome (up to 10 bars)
+let result=‘none’;
+const fwd=candles.slice(i+1,i+11);
+for(const fc of fwd){
+if(isSell&&fc.l<=tp){result=‘win’;break;}
+if(isSell&&fc.h>=sl){result=‘loss’;break;}
+if(!isSell&&fc.h>=tp){result=‘win’;break;}
+if(!isSell&&fc.l<=sl){result=‘loss’;break;}
+}
+if(result===‘none’)continue;
+total++;rrSum+=rr;
+if(result===‘win’)wins++;else losses++;
+logLines.push(`[${new Date(cur.t).toLocaleDateString('th-TH')}] ${side} @ ${entry.toFixed(0)} → SL:${sl.toFixed(0)} TP:${tp.toFixed(0)} R:R${rr.toFixed(1)} → ${result==='win'?'✅ WIN':'❌ LOSS'}`);
+if(total>=300)break; // cap
+}
+// Update UI
+const wr=total?Math.round(wins/total*100):0;
+const avgRR=total?(rrSum/total).toFixed(1):’–’;
+document.getElementById(‘btWrPct’).textContent=wr+’%’;
+document.getElementById(‘btWrPct’).style.color=wr>=60?‘var(–green)’:wr>=45?‘var(–gold)’:‘var(–red)’;
+document.getElementById(‘btWrFill’).style.width=wr+’%’;
+document.getElementById(‘btWrFill’).style.background=wr>=60?‘var(–green)’:wr>=45?‘var(–gold)’:‘var(–red)’;
+document.getElementById(‘btTotal’).textContent=total;
+document.getElementById(‘btWin’).textContent=wins;
+document.getElementById(‘btLoss’).textContent=losses;
+document.getElementById(‘btRR’).textContent=avgRR;
+log.innerHTML=logLines.slice(-30).join(’\n’)||‘ไม่มี signal ที่ผ่านเกณฑ์’;
+log.scrollTop=log.scrollHeight;
+showToast(`✅ Backtest: ${total} trades · Win Rate: ${wr}%`);
+document.getElementById(‘btSrc’).textContent=`4H · ${candles.length}แท่ง · ${total}trades`;
+}catch(e){log.textContent=’❌ Error: ’+e.message;}
+btn.disabled=false;btn.textContent=‘▶ RUN BACKTEST’;
+}
+
+// ─── Win/Loss Tracker ──────────────────────────────────────
+const TRADE_LOG_KEY=‘s9_trades’;
+const GS_URL_KEY=‘s9_gsurl’;
+let TRADES=[];
+function loadTrades(){try{TRADES=JSON.parse(localStorage.getItem(TRADE_LOG_KEY)||’[]’);}catch(e){TRADES=[];}renderTrades();}
+function saveTrades(){try{localStorage.setItem(TRADE_LOG_KEY,JSON.stringify(TRADES));}catch(e){}}
+function clearTrades(){if(!confirm(‘ล้าง Trade Log ทั้งหมด?’))return;TRADES=[];saveTrades();renderTrades();showToast(‘ล้างแล้ว’);}
+function addTrade(side,entry,sl,tp1,tp2,rr,score,reason,mode){
+const now=new Date();
+TRADES.unshift({id:Date.now(),side,entry,sl,tp1,tp2,rr,score,reason,mode,
+gold:S.gold,dxy:S.dxy,result:‘pending’,
+date:now.toLocaleDateString(‘th-TH’,{day:‘2-digit’,month:‘2-digit’,year:‘2-digit’}),
+time:now.toLocaleTimeString(‘th-TH’,{hour:‘2-digit’,minute:‘2-digit’,second:‘2-digit’,hour12:false}),
+iso:now.toISOString()});
+if(TRADES.length>100)TRADES.pop();
+saveTrades();renderTrades();
+}
+function setResult(id,res){
+const t=TRADES.find(x=>x.id===id);if(!t)return;
+t.result=res;t.resultTime=new Date().toISOString();
+saveTrades();renderTrades();showToast(res===‘win’?‘✅ WIN’:‘❌ LOSS’);
+const url=localStorage.getItem(GS_URL_KEY);
+if(url)syncOne(t,url);
+}
+function calcWR(){
+const s=TRADES.filter(t=>t.result===‘win’||t.result===‘loss’);
+const w=TRADES.filter(t=>t.result===‘win’).length;
+return{total:TRADES.length,wins:w,losses:TRADES.filter(t=>t.result===‘loss’).length,pend:TRADES.filter(t=>t.result===‘pending’).length,pct:s.length?Math.round(w/s.length*100):null};
+}
+function renderTrades(){
+const wr=calcWR();
+const pct=wr.pct,pctStr=pct!==null?pct+’%’:’–%’;
+const col=pct===null?‘var(–muted)’:pct>=60?‘var(–green)’:pct>=40?‘var(–gold)’:‘var(–red)’;
+document.getElementById(‘wrPct’).textContent=pctStr;document.getElementById(‘wrPct’).style.color=col;
+document.getElementById(‘wrFill’).style.width=(pct||0)+’%’;document.getElementById(‘wrFill’).style.background=col;
+document.getElementById(‘wrTotal’).textContent=wr.total;
+document.getElementById(‘wrWin’).textContent=wr.wins;
+document.getElementById(‘wrLoss’).textContent=wr.losses;
+document.getElementById(‘wrPend’).textContent=wr.pend;
+const list=document.getElementById(‘tradeList’);
+if(!TRADES.length){list.innerHTML=’<div class="rec-empty">ยังไม่มี Trade</div>’;return;}
+list.innerHTML=TRADES.slice(0,30).map(t=>`
+
+<div class="tl-item ${t.result}">
+  <div class="tl-sig">${t.side==='SELL'?'🔴':t.side==='BUY'?'🟢':'⚡'}<br>${t.side}</div>
+  <div class="tl-info">
+    <div style="color:var(--text);font-weight:600">${t.date} ${t.time} · ${t.mode}</div>
+    <div>Entry:<span style="color:var(--gold)"> ${parseFloat(t.entry).toFixed(2)}</span> SL:<span style="color:var(--red)"> ${parseFloat(t.sl).toFixed(2)}</span> TP:<span style="color:var(--green)"> ${parseFloat(t.tp1).toFixed(2)}</span></div>
+    <div>R:R 1:${parseFloat(t.rr).toFixed(1)} · ${t.score}/100</div>
+  </div>
+  ${t.result==='pending'?`<div class="tl-btn">
+    <button class="wl-btn w" onclick="setResult(${t.id},'win')">WIN</button>
+    <button class="wl-btn l" onclick="setResult(${t.id},'loss')">LOSS</button>
+  </div>`:`<div style="font-family:'Orbitron',sans-serif;font-size:11px;font-weight:900;color:${t.result==='win'?'var(--green)':'var(--red)'}">${t.result.toUpperCase()}</div>`}
+</div>`).join('');
+}
+function saveGsUrl(){const url=document.getElementById('gsUrl').value.trim();if(!url)return;try{localStorage.setItem(GS_URL_KEY,url);}catch(e){}showToast('✅ บันทึก Sheets URL');}
+function loadGsUrl(){try{const u=localStorage.getItem(GS_URL_KEY)||'';if(u)document.getElementById('gsUrl').value=u;}catch(e){}}
+
+async function testGoogleSheet(){
+const url=document.getElementById(‘gsUrl’).value.trim()||localStorage.getItem(GS_URL_KEY);
+if(!url){showToast(‘⚠️ กรุณากรอก Google Sheets URL ก่อน’);return;}
+const btn=document.getElementById(‘testGsBtn’);
+btn.textContent=‘⏳ Testing…’;btn.style.opacity=‘0.6’;btn.disabled=true;
+try{
+// Send a test record
+const now=new Date();
+const p=new URLSearchParams({
+date:now.toLocaleDateString(‘th-TH’,{day:‘2-digit’,month:‘2-digit’,year:‘2-digit’}),
+time:now.toLocaleTimeString(‘th-TH’,{hour:‘2-digit’,minute:‘2-digit’,second:‘2-digit’,hour12:false}),
+iso:now.toISOString(),
+side:‘TEST’,entry:‘3300.00’,sl:‘3310.00’,tp1:‘3275.00’,tp2:‘3250.00’,
+rr:‘2.0’,score:‘75’,mode:‘TEST’,gold:String(S.gold||0),dxy:String(S.dxy||0),
+result:‘test’,reason:‘Test from Sentinel v9 — ทดสอบการเชื่อมต่อ’,resultTime:now.toISOString(),
+});
+const res=await fetch(`${url}?${p.toString()}`,{method:‘GET’});
+if(res.ok){
+const txt=await res.text().catch(()=>‘ok’);
+showToast(‘✅ Google Sheets ตอบกลับ: ‘+(txt.substring(0,30)||‘OK’));
+btn.textContent=‘✅ OK’;btn.style.background=‘rgba(0,255,170,.2)’;
+document.getElementById(‘gsLbl’).textContent=‘CONNECTED’;
+}else{
+showToast(‘❌ Sheets ตอบ HTTP ‘+res.status);
+btn.textContent=‘❌ HTTP ‘+res.status;btn.style.background=‘rgba(255,51,85,.15)’;
+}
+}catch(e){
+// CORS error is common but means request went through (GAS doesn’t set CORS on GET)
+if(e.name===‘TypeError’||e.message.includes(‘fetch’)){
+showToast(‘⚡ ส่งแล้ว — ตรวจใน Sheet ได้เลย (CORS หลีกได้ปกติ)’);
+btn.textContent=‘⚡ SENT’;btn.style.background=‘rgba(255,149,0,.15)’;
+document.getElementById(‘gsLbl’).textContent=‘SENT’;
+}else{
+showToast(‘❌ Error: ‘+e.message.substring(0,30));
+btn.textContent=‘❌ FAIL’;btn.style.background=‘rgba(255,51,85,.15)’;
+}
+}
+setTimeout(()=>{btn.textContent=‘🔬 TEST’;btn.style.opacity=‘1’;btn.style.background=’’;btn.disabled=false;},3000);
+}
+async function syncOne(t,url){
+try{
+const p=new URLSearchParams({date:t.date,time:t.time,iso:t.iso||’’,side:t.side,entry:t.entry,sl:t.sl,tp1:t.tp1,tp2:t.tp2,rr:t.rr,score:t.score,mode:t.mode,gold:t.gold,dxy:t.dxy||’’,result:t.result,reason:(t.reason||’’).substring(0,200),resultTime:t.resultTime||’’});
+await fetch(`${url}?${p.toString()}`);t.synced=true;saveTrades();
+}catch(e){console.warn(‘sync fail’,e);}
+}
+async function syncSheets(){
+const url=localStorage.getItem(GS_URL_KEY);
+if(!url){showToast(‘⚠️ ยังไม่ได้ตั้ง Google Sheets URL’);return;}
+const btn=document.getElementById(‘syncTxt’);btn.textContent=‘⏳ Syncing…’;
+const unsync=TRADES.filter(t=>!t.synced);
+let ok=0;
+for(const t of unsync){await syncOne(t,url);if(t.synced)ok++;}
+renderTrades();btn.textContent=‘Sync → Google Sheets’;
+showToast(`Sync: ${ok}/${unsync.length} ✓`);
+document.getElementById(‘gsLbl’).textContent=`SYNCED ${ok}`;
+}
+
+// ─── Alert Records ──────────────────────────────────────────
+const ALERTS=[];
+const MAX_ALERTS=50;
+function recordAlert(side,score,entry,sl,tp1,tp2,rr,reason){
+const now=new Date();
+ALERTS.unshift({id:Date.now(),side,score,entry:entry.toFixed(2),sl:sl.toFixed(2),tp1:tp1.toFixed(2),tp2:tp2.toFixed(2),rr:rr.toFixed(2),reason,
+time:now.toLocaleTimeString(‘th-TH’,{hour:‘2-digit’,minute:‘2-digit’,second:‘2-digit’,hour12:false}),
+date:now.toLocaleDateString(‘th-TH’,{day:‘2-digit’,month:‘2-digit’,year:‘2-digit’}),
+gold:(S.gold||0).toFixed(2),mode:S.mode.toUpperCase()});
+if(ALERTS.length>MAX_ALERTS)ALERTS.pop();
+renderAlerts();
+}
+function clearAlerts(){ALERTS.length=0;renderAlerts();}
+function renderAlerts(){
+document.getElementById(‘recCnt’).textContent=ALERTS.length+’ รายการ’;
+const list=document.getElementById(‘recList’);
+if(!ALERTS.length){list.innerHTML=’<div class="rec-empty">ยังไม่มีการแจ้งเตือน · เปิด ALARM แล้วรอสัญญาณ</div>’;return;}
+list.innerHTML=ALERTS.map(a=>`
+
+<div class="rec-item rec-${a.side.toLowerCase()}">
+  <div class="rec-top">
+    <span class="rec-sig">${a.side==='SELL'?'🔴':'🟢'} ${a.side}</span>
+    <span style="font-size:10px;padding:1px 6px;border-radius:8px;background:rgba(201,127,255,.12);color:var(--purple);font-family:'IBM Plex Mono',monospace">${a.score}/100</span>
+    <span class="rec-time">${a.date} ${a.time} · ${a.mode}</span>
+  </div>
+  <div class="rec-body">
+    <span><span class="rec-k">Entry:</span><span class="rec-v" style="color:var(--gold)"> ${a.entry}</span></span>
+    <span><span class="rec-k">SL:</span><span class="rec-v" style="color:var(--red)"> ${a.sl}</span></span>
+    <span><span class="rec-k">TP1:</span><span class="rec-v" style="color:var(--green)"> ${a.tp1}</span></span>
+    <span><span class="rec-k">R:R</span><span class="rec-v"> 1:${a.rr}</span></span>
+    <span><span class="rec-k">Gold:</span><span class="rec-v"> ${a.gold}</span></span>
+  </div>
+  <div class="rec-reason">${a.reason}</div>
+</div>`).join('');
+}
+
+// ─── Alarm ────────────────────────────────────────────────
+let _lastAlarmSig=null,_lastAlarmTime=0;
+function alarm(){
+const r=compute();if(!r)return;
+if(!S.audioCtx)try{S.audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
+if(S.audioCtx){
+if(navigator.vibrate)navigator.vibrate([200,80,200,80,400]);
+[660,880,1100].forEach((f,i)=>{
+const o=S.audioCtx.createOscillator(),g=S.audioCtx.createGain();
+o.connect(g);g.connect(S.audioCtx.destination);o.frequency.value=f;o.type=‘sine’;
+g.gain.setValueAtTime(0.25,S.audioCtx.currentTime+i*.13);
+g.gain.exponentialRampToValueAtTime(0.001,S.audioCtx.currentTime+i*.13+.11);
+o.start(S.audioCtx.currentTime+i*.13);o.stop(S.audioCtx.currentTime+i*.13+.11);
+});
+}
+const now=Date.now();
+if(now-_lastAlarmTime<60000&&_lastAlarmSig===r.side)return;
+_lastAlarmSig=r.side;_lastAlarmTime=now;
+const smc=computeSMC();
+const smcScore=smc?smc.conf:0;
+const combined=Math.round((r.tot+smcScore)/2);
+const reason=[`Mode:${MODES[S.mode].label}`,`Score:${r.tot}`,`SMC:${smcScore}`,`Trend:${r.trend}`,
+`BOS:${r.bos?'✓':'✗'}`,`CHoCH:${r.choch?'✓':'✗'}`,`OB:${(r.inBullOB||r.inBearOB)?'✓':'✗'}`,
+`Liq:${r.liqSweep?'✓':'✗'}`,`GZ:${r.inGolden?'✓':'✗'}`,`Sess:${r.se.name}`].join(’ · ’);
+recordAlert(r.side,combined,r.entry,r.sl,r.tp1,r.tp2,r.rr,reason);
+addTrade(r.side,r.entry,r.sl,r.tp1,r.tp2,r.rr,combined,reason,MODES[S.mode].label);
+}
+function toggleAlarm(){
+S.alarmOn=!S.alarmOn;
+document.getElementById(‘aIco’).textContent=S.alarmOn?‘🔕’:‘🔔’;
+document.getElementById(‘aTxt’).textContent=S.alarmOn?‘ARMED’:‘ALARM OFF’;
+document.getElementById(‘aBtn’).classList.toggle(‘armed’,S.alarmOn);
+showToast(S.alarmOn?‘🔔 Armed’:‘Off’);
+}
+
+// ─── UI Helpers ────────────────────────────────────────────
+function setStat(st,msg){
+document.getElementById(‘sDot’).className=‘sd ‘+(st===‘ok’?‘ok’:st===‘ld’?‘ld’:‘er’);
+document.getElementById(‘sVal’).textContent=msg;
+document.getElementById(‘sRight’).textContent=st===‘ok’?`Fetch#${S.fetchN}·${S.apiKey?'REAL':'SYN'}`:’–’;
+}
+function setPill(cls,txt){
+document.getElementById(‘pill’).className=‘pill ‘+cls;
+document.getElementById(‘pTxt’).textContent=txt;
+}
+function showNotice(msg){document.getElementById(‘notice’).classList.remove(‘hide’);document.getElementById(‘noticeText’).innerHTML=’<b>⚠️ Error</b> — ‘+msg;}
+function hideNotice(){document.getElementById(‘notice’).classList.add(‘hide’);}
+let cdT;
+function startCD(s){clearInterval(cdT);let c=s;cdT=setInterval(()=>{c–;document.getElementById(‘sRight’).textContent=`รีเฟรชใน ${c}วิ`;if(c<=0)clearInterval(cdT);},1000);}
+function spk(id,data,col){
+const cv=document.getElementById(id);if(!cv||!data||data.length<2)return;
+const ctx=cv.getContext(‘2d’),W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
+const mn=Math.min(…data),mx=Math.max(…data),rng=mx-mn||1;
+const pts=data.map((v,i)=>[i/(data.length-1)*W,H-((v-mn)/rng)*(H-3)-1.5]);
+ctx.beginPath();pts.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));
+ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.stroke();
+}
+function animN(id,target,dur){
+const el=document.getElementById(id);
+const s=parseInt(el.textContent)||0,t0=performance.now();
+const step=n=>{const p=Math.min((n-t0)/dur,1),e=1-Math.pow(1-p,3);el.textContent=Math.round(s+(target-s)*e);if(p<1)requestAnimationFrame(step);};
+requestAnimationFrame(step);
+}
+function showToast(msg){
+const t=document.getElementById(‘toast’);t.textContent=msg;t.classList.add(‘show’);
+setTimeout(()=>t.classList.remove(‘show’),2500);
+}
+function setMode(m){
+S.mode=m;S.smcCache=null;
+[‘scalp’,‘swing’,‘position’].forEach(x=>{
+const b=document.getElementById(‘bm-’+x);
+b.className=‘mb’+(x===m?’ ‘+{‘scalp’:‘ms’,‘swing’:‘mw’,‘position’:‘mp’}[x]:’’);
+});
+render();showToast(‘Mode: ‘+MODES[m].label);
+}
+function showTab(t){
+[‘c’,‘d’,‘f’].forEach(x=>{document.getElementById(‘t’+x).classList.toggle(‘show’,x===t);});
+document.querySelectorAll(’.lt’).forEach((b,i)=>b.classList.toggle(‘on’,[‘c’,‘d’,‘f’][i]===t));
+}
+function smcTab(t){
+[‘swing’,‘mtf’,‘choch’,‘liq’,‘ob’,‘fib’,‘final’].forEach(k=>document.getElementById(‘smc-’+k).classList.toggle(‘show’,k===t));
+document.querySelectorAll(’.smc-tab’).forEach((b,i)=>b.classList.toggle(‘on’,[‘swing’,‘mtf’,‘choch’,‘liq’,‘ob’,‘fib’,‘final’][i]===t));
+}
+
+// ─── TradingView ───────────────────────────────────────────
+let TV_TF=‘240’,curTV=‘gold’;
+function createTV(containerId,symbol,tf){
+const c=document.getElementById(containerId);if(!c)return;c.innerHTML=’’;
+const sc=document.createElement(‘script’);sc.src=‘https://s3.tradingview.com/tv.js’;sc.async=true;
+sc.onload=()=>new TradingView.widget({container_id:containerId,symbol,interval:tf,timezone:‘Asia/Bangkok’,theme:‘dark’,style:‘1’,locale:‘th’,toolbar_bg:’#0d1a2e’,enable_publishing:false,hide_top_toolbar:false,save_image:false,height:340,width:‘100%’,studies:[‘Volume@tv-basicstudies’],backgroundColor:’#08111f’,gridColor:‘rgba(0,229,255,.04)’,hide_side_toolbar:true,allow_symbol_change:true,withdateranges:false,details:false});
+if(window.TradingView)sc.onload();else document.head.appendChild(sc);
+}
+function switchTV(c,btn){
+curTV=c;document.querySelectorAll(’.tv-tab’).forEach(b=>b.classList.remove(‘active’));if(btn)btn.classList.add(‘active’);
+document.getElementById(‘tv-gold’).style.display=c===‘gold’?’’:‘none’;
+document.getElementById(‘tv-dxy’).style.display=c===‘dxy’?’’:‘none’;
+if(c===‘gold’)createTV(‘tvGoldW’,‘OANDA:XAUUSD’,TV_TF);
+else createTV(‘tvDxyW’,‘FX_IDC:USDX’,TV_TF);
+}
+function setTVTF(tf,btn){
+TV_TF=tf;document.querySelectorAll(’.tfb’).forEach(b=>b.classList.remove(‘on’));if(btn)btn.classList.add(‘on’);
+if(curTV===‘gold’)createTV(‘tvGoldW’,‘OANDA:XAUUSD’,tf);
+else createTV(‘tvDxyW’,‘FX_IDC:USDX’,tf);
+const map={‘5’:‘5m’,‘15’:‘15m’,‘30’:‘30m’,‘60’:‘1H’,‘240’:‘4H’};
+S.tf=map[tf]||‘4H’;
+}
+
+// ─── DXY Manual ───────────────────────────────────────────
+function onDXYInput(){const v=parseFloat(document.getElementById(‘dxyInp’).value);if(!isNaN(v)&&v>50&&v<200){document.getElementById(‘dxyStatus’).textContent=‘กด SET’;document.getElementById(‘dxyStatus’).style.color=‘var(–gold)’;}}
+function applyDXY(){const v=parseFloat(document.getElementById(‘dxyInp’).value);if(isNaN(v)||v<50||v>200){showToast(‘⚠️ DXY ไม่ถูกต้อง’);return;}S.dxyManual=parseFloat(v.toFixed(3));document.getElementById(‘dxyStatus’).textContent=’Manual: ’+S.dxyManual.toFixed(3);document.getElementById(‘dxyStatus’).style.color=‘var(–cyan)’;S.dxy=S.dxyManual;render();showToast(‘DXY = ‘+S.dxyManual.toFixed(3));}
+function clearDXY(){S.dxyManual=null;document.getElementById(‘dxyInp’).value=’’;document.getElementById(‘dxyStatus’).textContent=‘อัตโนมัติ’;document.getElementById(‘dxyStatus’).style.color=‘var(–muted)’;showToast(‘DXY: Auto’);fetchAll().finally(scheduleRefresh);}
+
+// ─── Refresh ──────────────────────────────────────────────
+function scheduleRefresh(){clearTimeout(S.refreshT);S.refreshT=setTimeout(()=>fetchAll().finally(scheduleRefresh),30000);}
+function manualRefresh(){const b=document.getElementById(‘rBtn’);b.style.transition=‘transform .5s’;b.style.transform=‘rotate(360deg)’;b.disabled=true;setTimeout(()=>{b.style.transform=’’;},500);fetchAll().finally(()=>{b.disabled=false;showToast(‘✓ Updated’)});}
+
+// ─── Init ─────────────────────────────────────────────────
+window.addEventListener(‘load’,async()=>{
+loadApiKey(); loadTrades(); loadGsUrl();
+await fetchAll();
+createTV(‘tvGoldW’,‘OANDA:XAUUSD’,TV_TF);
+scheduleRefresh();
+// Auto-test API key and fetch OHLC
+if(S.apiKey){
+setTimeout(async()=>{
+const ok=await testApiKey();
+if(!ok){
+// Key test failed — use synthetic but don’t block
+document.getElementById(‘smcSrc’).textContent=‘SYNTHETIC (API ไม่สำเร็จ)’;
+S.smcCache=null; render();
+}
+}, 1500);
+}
+});
+window.addEventListener(‘resize’,()=>render());
+</script>
+
+</body>
+</html>
