@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="th">
 <head>
 <meta charset="UTF-8">
@@ -477,606 +476,615 @@ const FX_URL='https://api.frankfurter.app/latest?from=USD&to=EUR,JPY,GBP,CAD,SEK
 // Worker endpoint: /ohlc?tf=1H&limit=500
 // If no worker, call Ninjas directly with API key header
 const NINJAS_API_KEY = 'pby16WeV9IbfVLSUiDAPdCJKL8NV33rOBudWZaeC';
-// API Ninjas Gold Price Historical — correct endpoint
-// GET /v1/goldpricehistorical?interval=1h&limit=500
-// intervals: 1m 5m 15m 30m 1h 4h 1d
-const NINJAS_OHLC_URL = 'https://api.api-ninjas.com/v1/goldpricehistorical';
+// API Ninjas Gold — correct endpoint: /v1/commoditypricehistorical
+// params: name=gold, interval=(1m|5m|15m|30m|1h|4h|1d), start=unix, end=unix
+const NINJAS_OHLC_URL = 'https://api.api-ninjas.com/v1/commoditypricehistorical';
 
 const MODES={
-scalp:   {label:‘SCALP’,   minScore:65,rrMin:1.5,slPct:0.5, tp1Pct:0.9, tp2Pct:1.6, w:{smc:20,fib:15,ob:25,corr:20,vol:20}},
-swing:   {label:‘SWING’,   minScore:55,rrMin:2.0,slPct:1.2, tp1Pct:2.5, tp2Pct:4.0, w:{smc:25,fib:15,ob:25,corr:25,vol:10}},
-position:{label:‘POSITION’,minScore:50,rrMin:3.0,slPct:3.0, tp1Pct:8.0, tp2Pct:15.0,w:{smc:30,fib:10,ob:30,corr:25,vol:5}},
+  scalp:   {label:'SCALP',   minScore:65,rrMin:1.5,slPct:0.5, tp1Pct:0.9, tp2Pct:1.6, w:{smc:20,fib:15,ob:25,corr:20,vol:20}},
+  swing:   {label:'SWING',   minScore:55,rrMin:2.0,slPct:1.2, tp1Pct:2.5, tp2Pct:4.0, w:{smc:25,fib:15,ob:25,corr:25,vol:10}},
+  position:{label:'POSITION',minScore:50,rrMin:3.0,slPct:3.0, tp1Pct:8.0, tp2Pct:15.0,w:{smc:30,fib:10,ob:30,corr:25,vol:5}},
 };
 
 const S={
-gold:null,dxy:null,goldPrev:null,dxyPrev:null,
-goldCh:0,goldChp:0,hist:[],goldSpk:[],dxySpk:[],
-mode:‘scalp’,tf:‘1H’,isLive:false,fetchN:0,lastFetch:null,
-alarmOn:false,audioCtx:null,refreshT:null,dxyManual:null,
-apiKey:null,
-candles:{},         // real OHLC per TF: {‘4H’:[],‘1H’:[],‘15m’:[],‘5m’:[]}
-candleFetchTime:{}, // last fetch time per TF
-smcCache:null,
+  gold:null,dxy:null,goldPrev:null,dxyPrev:null,
+  goldCh:0,goldChp:0,hist:[],goldSpk:[],dxySpk:[],
+  mode:'scalp',tf:'1H',isLive:false,fetchN:0,lastFetch:null,
+  alarmOn:false,audioCtx:null,refreshT:null,dxyManual:null,
+  apiKey:null,
+  candles:{},         // real OHLC per TF: {'4H':[],'1H':[],'15m':[],'5m':[]}
+  candleFetchTime:{}, // last fetch time per TF
+  smcCache:null,
 };
 // ─── Clock ────────────────────────────────────────────────
-setInterval(()=>{ document.getElementById(‘clk’).textContent=new Date().toLocaleTimeString(‘th-TH’,{hour:‘2-digit’,minute:‘2-digit’,second:‘2-digit’,hour12:false}); },1000);
+setInterval(()=>{ document.getElementById('clk').textContent=new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}); },1000);
 
 // ─── Session ──────────────────────────────────────────────
 function sess(){
-const h=new Date().getUTCHours();
-if(h>=7&&h<12)  return{name:‘LONDON’,pts:20,ok:true,col:‘var(–green)’};
-if(h>=13&&h<21) return{name:‘NY’,pts:20,ok:true,col:‘var(–gold)’};
-if(h>=12&&h<13) return{name:‘OVERLAP’,pts:15,ok:true,col:‘var(–cyan)’};
-return{name:‘TOKYO’,pts:8,ok:false,col:‘var(–muted)’};
+  const h=new Date().getUTCHours();
+  if(h>=7&&h<12)  return{name:'LONDON',pts:20,ok:true,col:'var(--green)'};
+  if(h>=13&&h<21) return{name:'NY',pts:20,ok:true,col:'var(--gold)'};
+  if(h>=12&&h<13) return{name:'OVERLAP',pts:15,ok:true,col:'var(--cyan)'};
+  return{name:'TOKYO',pts:8,ok:false,col:'var(--muted)'};
 }
 
 // ─── Fetch Helpers ─────────────────────────────────────────
 async function apiFetch(url,headers={}){
-const ctrl=new AbortController();
-const t=setTimeout(()=>ctrl.abort(),12000);
-try{
-const res=await fetch(url,{signal:ctrl.signal,headers});
-clearTimeout(t);
-if(!res.ok) throw new Error(’HTTP ’+res.status);
-return await res.json();
-}catch(e){clearTimeout(t);throw e;}
+  const ctrl=new AbortController();
+  const t=setTimeout(()=>ctrl.abort(),12000);
+  try{
+    const res=await fetch(url,{signal:ctrl.signal,headers});
+    clearTimeout(t);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    return await res.json();
+  }catch(e){clearTimeout(t);throw e;}
 }
 
 // ─── API Key Management ────────────────────────────────────
 async function saveApiKey(){
-const k=document.getElementById(‘apiKeyInp’).value.trim();
-if(!k){showToast(‘⚠️ กรุณากรอก API Key’);return;}
-try{localStorage.setItem(‘sentinel_api_key’,k);}catch(e){}
-S.apiKey=k; updateKeyStatus();
-document.getElementById(‘apiKeyInp’).value=’’;
-await testApiKey();
+  const k=document.getElementById('apiKeyInp').value.trim();
+  if(!k){showToast('⚠️ กรุณากรอก API Key');return;}
+  try{localStorage.setItem('sentinel_api_key',k);}catch(e){}
+  S.apiKey=k; updateKeyStatus();
+  document.getElementById('apiKeyInp').value='';
+  await testApiKey();
 }
 function loadApiKey(){
-try{const stored=localStorage.getItem(‘sentinel_api_key’);S.apiKey=stored||NINJAS_API_KEY;}
-catch(e){S.apiKey=NINJAS_API_KEY;}
-updateKeyStatus();
-if(S.apiKey) document.getElementById(‘setupCard’).style.display=‘none’;
+  try{const stored=localStorage.getItem('sentinel_api_key');S.apiKey=stored||NINJAS_API_KEY;}
+  catch(e){S.apiKey=NINJAS_API_KEY;}
+  updateKeyStatus();
+  if(S.apiKey) document.getElementById('setupCard').style.display='none';
 }
 function updateKeyStatus(){
-const el=document.getElementById(‘keyStatus’);
-if(S.apiKey){el.textContent=‘✓ พร้อมใช้’;el.className=‘key-ok’;}
-else{el.textContent=‘ยังไม่ได้ตั้ง’;el.className=‘key-no’;}
+  const el=document.getElementById('keyStatus');
+  if(S.apiKey){el.textContent='✓ พร้อมใช้';el.className='key-ok';}
+  else{el.textContent='ยังไม่ได้ตั้ง';el.className='key-no';}
 }
 async function testApiKey(){
-const el=document.getElementById(‘keyStatus’);
-el.textContent=‘⏳ ทดสอบ…’;el.className=‘key-ok’;
-try{
-const url=NINJAS_OHLC_URL+’?interval=1h&limit=5’;
-const data=await apiFetch(url,{‘X-Api-Key’:S.apiKey});
-if(Array.isArray(data)&&data.length>0){
-el.textContent=‘✓ OK · ‘+data.length+’ candles’;el.className=‘key-ok’;
-showToast(‘✅ API Ninjas ใช้งานได้ — กำลังดึง OHLC…’);
-fetchOHLC(‘4H’,500).then(()=>fetchOHLC(‘1H’,200)).then(()=>fetchOHLC(‘15m’,100)).then(()=>{S.smcCache=null;render();});
-return true;
-}else if(data&&data.error){
-el.textContent=’✗ ’+String(data.error).substring(0,25);el.className=‘key-no’;
-showToast(’❌ ’+data.error);return false;
-}
-el.textContent=‘✗ ข้อมูลว่าง’;el.className=‘key-no’;return false;
-}catch(e){
-el.textContent=’✗ ’+e.message.substring(0,25);el.className=‘key-no’;
-showToast(’❌ API: ’+e.message.substring(0,30));return false;
-}
+  const el=document.getElementById('keyStatus');
+  el.textContent='⏳ ทดสอบ...';el.className='key-ok';
+  try{
+    // Test with 3 bars of 1h gold
+    const endTs=Math.floor(Date.now()/1000);
+    const startTs=endTs-(3*60*60);
+    const url=`${NINJAS_OHLC_URL}?name=gold&interval=1h&start=${startTs}&end=${endTs}`;
+    const data=await apiFetch(url,{'X-Api-Key':S.apiKey});
+    if(Array.isArray(data)&&data.length>0){
+      el.textContent=`✓ OK · Gold ${data[0]?.close?.toFixed(0)||'--'}`;el.className='key-ok';
+      showToast('✅ API Ninjas ใช้งานได้ — กำลังดึง OHLC จริง...');
+      fetchOHLC('4H',500).then(()=>fetchOHLC('1H',200)).then(()=>fetchOHLC('15m',100)).then(()=>{S.smcCache=null;render();});
+      return true;
+    }else if(data&&data.error){
+      el.textContent='✗ '+String(data.error).substring(0,25);el.className='key-no';
+      showToast('❌ '+data.error);return false;
+    }
+    el.textContent='✗ ข้อมูลว่าง';el.className='key-no';return false;
+  }catch(e){
+    el.textContent='✗ '+e.message.substring(0,25);el.className='key-no';
+    showToast('❌ API: '+e.message.substring(0,30));return false;
+  }
 }
 // ─── Real OHLC from API Ninjas ──────────────────────────────
-// API Ninjas goldpricehistorical intervals: 1m 5m 15m 30m 1h 4h 1d
-const TF_MAP={‘5m’:‘5m’,‘15m’:‘15m’,‘30m’:‘30m’,‘1H’:‘1h’,‘4H’:‘4h’,‘1D’:‘1d’};
-const TF_MINUTES={‘5m’:5,‘15m’:15,‘30m’:30,‘1H’:60,‘4H’:240,‘1D’:1440};
+// API Ninjas intervals: 1m 5m 15m 30m 1h 4h 1d
+const TF_MAP={'5m':'5m','15m':'15m','30m':'30m','1H':'1h','4H':'4h','1D':'1d'};
+const TF_MINUTES={'5m':5,'15m':15,'30m':30,'1H':60,'4H':240,'1D':1440};
 
-async function fetchOHLC(tf, limit=200){
-if(!S.apiKey) return false;
-const now=Date.now();
-const minAge=(tf===‘4H’||tf===‘1D’)?15*60000:5*60000;
-if(S.candles[tf]&&S.candles[tf].length>0&&(now-(S.candleFetchTime[tf]||0))<minAge) return true;
-try{
-const interval=TF_MAP[tf]||‘1h’;
-const url=`${NINJAS_OHLC_URL}?interval=${interval}&limit=${limit}`;
-const data=await apiFetch(url,{‘X-Api-Key’:S.apiKey});
-if(!Array.isArray(data)||!data.length){
-console.warn(‘OHLC empty’,tf,data);
-if(!S.candles[tf]||!S.candles[tf].length) S.candles[tf]=buildSyntheticCandles(tf,limit);
-return false;
-}
-// Ninjas returns: [{open,high,low,close,time(unix)}]
-const candles=data.sort((a,b)=>(a.time||a.timestamp)-(b.time||b.timestamp)).map(d=>({
-t:(d.time||d.timestamp)*1000,
-o:parseFloat(d.open||d.price),
-h:parseFloat(d.high||d.open||d.price),
-l:parseFloat(d.low||d.open||d.price),
-c:parseFloat(d.close||d.price),
-v:parseFloat(d.volume||1),
-})).filter(c=>!isNaN(c.o)&&!isNaN(c.h));
-if(candles.length<5){
-console.warn(‘OHLC too few candles’,tf,candles.length);
-if(!S.candles[tf]||!S.candles[tf].length) S.candles[tf]=buildSyntheticCandles(tf,limit);
-return false;
-}
-S.candles[tf]=candles;
-S.candleFetchTime[tf]=now;
-S.smcCache=null;
-const srcEl=document.getElementById(‘smcSrc’);
-if(srcEl) srcEl.textContent=`REAL OHLC · 4H/1H/15m · ${candles.length}แท่ง`;
-console.log(‘OHLC loaded’,tf,candles.length,‘candles’);
-return true;
-}catch(e){
-console.warn(‘OHLC fetch fail’,tf,e.message);
-if(!S.candles[tf]||!S.candles[tf].length) S.candles[tf]=buildSyntheticCandles(tf,limit);
-return false;
-}
+async function fetchOHLC(tf, barsWanted=200){
+  if(!S.apiKey) return false;
+  const now=Date.now();
+  const minAge=(tf==='4H'||tf==='1D')?15*60000:5*60000;
+  if(S.candles[tf]&&S.candles[tf].length>0&&(now-(S.candleFetchTime[tf]||0))<minAge) return true;
+  try{
+    const interval=TF_MAP[tf]||'1h';
+    const mins=TF_MINUTES[tf]||60;
+    // Calculate start/end timestamps (Unix seconds)
+    const endTs=Math.floor(now/1000);
+    const startTs=endTs-(barsWanted*mins*60);
+    const url=`${NINJAS_OHLC_URL}?name=gold&interval=${interval}&start=${startTs}&end=${endTs}`;
+    const data=await apiFetch(url,{'X-Api-Key':S.apiKey});
+    if(!Array.isArray(data)||!data.length){
+      console.warn('OHLC empty',tf, JSON.stringify(data).substring(0,100));
+      if(!S.candles[tf]||!S.candles[tf].length) S.candles[tf]=buildSyntheticCandles(tf,barsWanted);
+      return false;
+    }
+    // API returns descending — sort ascending
+    const candles=data.sort((a,b)=>a.timestamp-b.timestamp).map(d=>({
+      t:d.timestamp*1000,
+      o:parseFloat(d.open),
+      h:parseFloat(d.high),
+      l:parseFloat(d.low),
+      c:parseFloat(d.close),
+      v:parseFloat(d.volume||1),
+    })).filter(c=>!isNaN(c.o)&&c.o>0);
+    if(candles.length<5){
+      console.warn('OHLC too few',tf,candles.length);
+      if(!S.candles[tf]||!S.candles[tf].length) S.candles[tf]=buildSyntheticCandles(tf,barsWanted);
+      return false;
+    }
+    S.candles[tf]=candles;
+    S.candleFetchTime[tf]=now;
+    S.smcCache=null;
+    const srcEl=document.getElementById('smcSrc');
+    if(srcEl) srcEl.textContent=`REAL OHLC · 4H ${S.candles['4H']?.length||0} · 1H ${S.candles['1H']?.length||0} · 15m ${S.candles['15m']?.length||0}`;
+    console.log('✅ OHLC loaded',tf, candles.length,'bars | latest close:', candles[candles.length-1]?.c?.toFixed(2));
+    return true;
+  }catch(e){
+    console.warn('OHLC fetch fail',tf,e.message);
+    if(!S.candles[tf]||!S.candles[tf].length) S.candles[tf]=buildSyntheticCandles(tf,barsWanted);
+    return false;
+  }
 }
 
 // Synthetic candle fallback (when no API key or API fails)
 function seededRng(seed){let s=seed;return()=>{s=(s*1664525+1013904223)&0xffffffff;return(s>>>0)/4294967296};}
 function buildSyntheticCandles(tf,count=200){
-const price=S.gold||3300;
-const vol={‘5m’:0.0012,‘15m’:0.0025,‘30m’:0.004,‘1H’:0.007,‘4H’:0.015,‘1D’:0.025};
-const v=vol[tf]||0.007;
-const rng=seededRng(parseInt(tf)||60+Math.floor(price));
-const candles=[];let p=price,mom=0;
-for(let i=0;i<count;i++){
-const r1=rng(),r2=rng(),r3=rng(),r4=rng(),r5=rng();
-const rev=(price-p)*0.015;
-mom=mom*0.75+(r1-0.5)*v*p+rev;
-const body=mom+(r2-0.5)*v*p*0.2;
-const o=p,cl=o+body;
-const hi=Math.max(o,cl)+r3*v*p*1.5,lo=Math.min(o,cl)-r4*v*p*1.5;
-candles.push({t:Date.now()-(count-i)*TF_MINUTES[tf]*60000,o,h:hi,l:lo,c:cl,v:0.3+r5*1.5});
-p=cl;
-}
-if(candles.length){const last=candles[candles.length-1];last.c=price;last.h=Math.max(last.h,price);last.l=Math.min(last.l,price);}
-return candles;
+  const price=S.gold||3300;
+  const vol={'5m':0.0012,'15m':0.0025,'30m':0.004,'1H':0.007,'4H':0.015,'1D':0.025};
+  const v=vol[tf]||0.007;
+  const rng=seededRng(parseInt(tf)||60+Math.floor(price));
+  const candles=[];let p=price,mom=0;
+  for(let i=0;i<count;i++){
+    const r1=rng(),r2=rng(),r3=rng(),r4=rng(),r5=rng();
+    const rev=(price-p)*0.015;
+    mom=mom*0.75+(r1-0.5)*v*p+rev;
+    const body=mom+(r2-0.5)*v*p*0.2;
+    const o=p,cl=o+body;
+    const hi=Math.max(o,cl)+r3*v*p*1.5,lo=Math.min(o,cl)-r4*v*p*1.5;
+    candles.push({t:Date.now()-(count-i)*TF_MINUTES[tf]*60000,o,h:hi,l:lo,c:cl,v:0.3+r5*1.5});
+    p=cl;
+  }
+  if(candles.length){const last=candles[candles.length-1];last.c=price;last.h=Math.max(last.h,price);last.l=Math.min(last.l,price);}
+  return candles;
 }
 
 function getCandles(tf){
-if(!S.candles[tf]||!S.candles[tf].length) S.candles[tf]=buildSyntheticCandles(tf,200);
-return S.candles[tf];
+  if(!S.candles[tf]||!S.candles[tf].length) S.candles[tf]=buildSyntheticCandles(tf,200);
+  return S.candles[tf];
 }
 
 // ─── Gold + DXY Price ──────────────────────────────────────
 async function getGoldPrice(){
-const d=await apiFetch(GOLD_URL);
-if(!d.price) throw new Error(‘No price’);
-const prev=S.gold||d.price;
-return{price:d.price,ch:parseFloat((d.price-prev).toFixed(2)),chp:parseFloat(((d.price-prev)/prev*100).toFixed(2)),dxy:d.dxy||null};
+  const d=await apiFetch(GOLD_URL);
+  if(!d.price) throw new Error('No price');
+  const prev=S.gold||d.price;
+  return{price:d.price,ch:parseFloat((d.price-prev).toFixed(2)),chp:parseFloat(((d.price-prev)/prev*100).toFixed(2)),dxy:d.dxy||null};
 }
 async function getDXY(){
-if(S.dxyManual!==null) return S.dxyManual;
-const d=await apiFetch(FX_URL);
-if(!d.rates) throw new Error(‘No DXY’);
-const{EUR,JPY,GBP,CAD,SEK,CHF}=d.rates;
-const raw=50.14348112*Math.pow(1/EUR,-0.576)*Math.pow(JPY,0.136)*Math.pow(1/GBP,-0.119)*Math.pow(CAD,0.091)*Math.pow(SEK,0.042)*Math.pow(CHF,0.036);
-return parseFloat(raw.toFixed(3));
+  if(S.dxyManual!==null) return S.dxyManual;
+  const d=await apiFetch(FX_URL);
+  if(!d.rates) throw new Error('No DXY');
+  const{EUR,JPY,GBP,CAD,SEK,CHF}=d.rates;
+  const raw=50.14348112*Math.pow(1/EUR,-0.576)*Math.pow(JPY,0.136)*Math.pow(1/GBP,-0.119)*Math.pow(CAD,0.091)*Math.pow(SEK,0.042)*Math.pow(CHF,0.036);
+  return parseFloat(raw.toFixed(3));
 }
 
 function buildHist(p){
-if(!S.hist.length&&p){const s=[];for(let i=11;i>=0;i–)s.push(p*(1+Math.sin(i*0.7)*0.004));S.hist=s;}
-const h=[…S.hist,p];if(h.length>48)h.shift();return h;
+  if(!S.hist.length&&p){const s=[];for(let i=11;i>=0;i--)s.push(p*(1+Math.sin(i*0.7)*0.004));S.hist=s;}
+  const h=[...S.hist,p];if(h.length>48)h.shift();return h;
 }
 
 async function fetchAll(){
-setStat(‘ld’,‘Fetching…’);
-let gData;
-try{gData=await getGoldPrice();}
-catch(e){setStat(‘er’,’Gold: ’+e.message);setPill(‘err’,‘ERR’);showNotice(’Gold API Error: ’+e.message);if(S.gold)render();return;}
-let dxy=S.dxy;
-if(S.dxyManual!==null) dxy=S.dxyManual;
-else if(gData.dxy?.value) dxy=gData.dxy.value;
-else{try{dxy=await getDXY();}catch(e){console.warn(‘DXY fail’);}}
-S.goldPrev=S.gold;S.dxyPrev=S.dxy;
-S.goldCh=gData.ch;S.goldChp=gData.chp;
-S.gold=gData.price;S.dxy=dxy;
-S.hist=buildHist(S.gold);
-S.goldSpk=[…S.hist].slice(-10);
-S.dxySpk=[…(S.dxySpk.length?S.dxySpk:[dxy||99]),dxy||99].slice(-10);
-S.isLive=true;S.fetchN++;S.lastFetch=new Date();
-setStat(‘ok’,`Gold ${S.gold.toFixed(2)} · DXY ${(S.dxy||0).toFixed(3)}`);
-setPill(‘live’,‘LIVE’);hideNotice();
-document.getElementById(‘cSrc’).textContent=‘LIVE’;
-// Also fetch OHLC if we have API key (non-blocking)
-if(S.apiKey){
-fetchOHLC(‘4H’,500).then(()=>fetchOHLC(‘1H’,200)).then(()=>fetchOHLC(‘15m’,100)).then(()=>{S.smcCache=null;render();});
-}
-render();startCD(30);
+  setStat('ld','Fetching...');
+  let gData;
+  try{gData=await getGoldPrice();}
+  catch(e){setStat('er','Gold: '+e.message);setPill('err','ERR');showNotice('Gold API Error: '+e.message);if(S.gold)render();return;}
+  let dxy=S.dxy;
+  if(S.dxyManual!==null) dxy=S.dxyManual;
+  else if(gData.dxy?.value) dxy=gData.dxy.value;
+  else{try{dxy=await getDXY();}catch(e){console.warn('DXY fail');}}
+  S.goldPrev=S.gold;S.dxyPrev=S.dxy;
+  S.goldCh=gData.ch;S.goldChp=gData.chp;
+  S.gold=gData.price;S.dxy=dxy;
+  S.hist=buildHist(S.gold);
+  S.goldSpk=[...S.hist].slice(-10);
+  S.dxySpk=[...(S.dxySpk.length?S.dxySpk:[dxy||99]),dxy||99].slice(-10);
+  S.isLive=true;S.fetchN++;S.lastFetch=new Date();
+  setStat('ok',`Gold ${S.gold.toFixed(2)} · DXY ${(S.dxy||0).toFixed(3)}`);
+  setPill('live','LIVE');hideNotice();
+  document.getElementById('cSrc').textContent='LIVE';
+  // Also fetch OHLC if we have API key (non-blocking)
+  if(S.apiKey){
+    fetchOHLC('4H',500).then(()=>fetchOHLC('1H',200)).then(()=>fetchOHLC('15m',100)).then(()=>{S.smcCache=null;render();});
+  }
+  render();startCD(30);
 }
 
 // ─── SMC Engine ────────────────────────────────────────────
 function detectSwings(candles,pivot=4){
-const sw=[];
-for(let i=pivot;i<candles.length-pivot;i++){
-const c=candles[i];
-let hi=true,lo=true;
-for(let j=1;j<=pivot;j++){
-if(candles[i-j].h>=c.h||candles[i+j].h>=c.h)hi=false;
-if(candles[i-j].l<=c.l||candles[i+j].l<=c.l)lo=false;
-}
-if(hi)sw.push({type:‘H’,price:c.h,idx:i,t:c.t});
-if(lo)sw.push({type:‘L’,price:c.l,idx:i,t:c.t});
-}
-return sw;
+  const sw=[];
+  for(let i=pivot;i<candles.length-pivot;i++){
+    const c=candles[i];
+    let hi=true,lo=true;
+    for(let j=1;j<=pivot;j++){
+      if(candles[i-j].h>=c.h||candles[i+j].h>=c.h)hi=false;
+      if(candles[i-j].l<=c.l||candles[i+j].l<=c.l)lo=false;
+    }
+    if(hi)sw.push({type:'H',price:c.h,idx:i,t:c.t});
+    if(lo)sw.push({type:'L',price:c.l,idx:i,t:c.t});
+  }
+  return sw;
 }
 function labelSwings(sw){
-const hs=sw.filter(s=>s.type===‘H’),ls=sw.filter(s=>s.type===‘L’);
-const out=[];
-hs.forEach((s,i)=>{if(i===0){out.push({…s,lbl:‘SH’});return;}out.push({…s,lbl:s.price>hs[i-1].price?‘HH’:‘LH’});});
-ls.forEach((s,i)=>{if(i===0){out.push({…s,lbl:‘SL’});return;}out.push({…s,lbl:s.price<ls[i-1].price?‘LL’:‘HL’});});
-return out.sort((a,b)=>a.idx-b.idx);
+  const hs=sw.filter(s=>s.type==='H'),ls=sw.filter(s=>s.type==='L');
+  const out=[];
+  hs.forEach((s,i)=>{if(i===0){out.push({...s,lbl:'SH'});return;}out.push({...s,lbl:s.price>hs[i-1].price?'HH':'LH'});});
+  ls.forEach((s,i)=>{if(i===0){out.push({...s,lbl:'SL'});return;}out.push({...s,lbl:s.price<ls[i-1].price?'LL':'HL'});});
+  return out.sort((a,b)=>a.idx-b.idx);
 }
 function detectTrend(sw){
-const hs=sw.filter(s=>s.lbl===‘HH’||s.lbl===‘LH’).slice(-3);
-const ls=sw.filter(s=>s.lbl===‘HL’||s.lbl===‘LL’).slice(-3);
-if(!hs.length||!ls.length)return’SIDEWAY’;
-const lh=hs[hs.length-1],ll=ls[ls.length-1];
-if(lh.lbl===‘HH’&&ll.lbl===‘HL’)return’UPTREND’;
-if(lh.lbl===‘LH’&&ll.lbl===‘LL’)return’DOWNTREND’;
-return’SIDEWAY’;
+  const hs=sw.filter(s=>s.lbl==='HH'||s.lbl==='LH').slice(-3);
+  const ls=sw.filter(s=>s.lbl==='HL'||s.lbl==='LL').slice(-3);
+  if(!hs.length||!ls.length)return'SIDEWAY';
+  const lh=hs[hs.length-1],ll=ls[ls.length-1];
+  if(lh.lbl==='HH'&&ll.lbl==='HL')return'UPTREND';
+  if(lh.lbl==='LH'&&ll.lbl==='LL')return'DOWNTREND';
+  return'SIDEWAY';
 }
 function detectCHoCH(sw,price){
-const hs=sw.filter(s=>s.lbl===‘HH’||s.lbl===‘LH’);
-const ls=sw.filter(s=>s.lbl===‘HL’||s.lbl===‘LL’);
-if(hs.length<2||ls.length<2)return{choch:false,dir:null,desc:‘ข้อมูลไม่พอ’};
-const lastHL=ls.filter(s=>s.lbl===‘HL’).pop();
-const lastLH=hs.filter(s=>s.lbl===‘LH’).pop();
-const prevHH=hs.filter(s=>s.lbl===‘HH’);
-if(prevHH.length&&lastHL&&price<lastHL.price)return{choch:true,dir:‘DOWN’,price:lastHL.price,desc:`หลุด HL@${lastHL.price.toFixed(0)}`};
-const prevLL=ls.filter(s=>s.lbl===‘LL’);
-if(prevLL.length&&lastLH&&price>lastLH.price)return{choch:true,dir:‘UP’,price:lastLH.price,desc:`ทะลุ LH@${lastLH.price.toFixed(0)}`};
-return{choch:false,dir:null,desc:‘ยังไม่เกิด’};
+  const hs=sw.filter(s=>s.lbl==='HH'||s.lbl==='LH');
+  const ls=sw.filter(s=>s.lbl==='HL'||s.lbl==='LL');
+  if(hs.length<2||ls.length<2)return{choch:false,dir:null,desc:'ข้อมูลไม่พอ'};
+  const lastHL=ls.filter(s=>s.lbl==='HL').pop();
+  const lastLH=hs.filter(s=>s.lbl==='LH').pop();
+  const prevHH=hs.filter(s=>s.lbl==='HH');
+  if(prevHH.length&&lastHL&&price<lastHL.price)return{choch:true,dir:'DOWN',price:lastHL.price,desc:`หลุด HL@${lastHL.price.toFixed(0)}`};
+  const prevLL=ls.filter(s=>s.lbl==='LL');
+  if(prevLL.length&&lastLH&&price>lastLH.price)return{choch:true,dir:'UP',price:lastLH.price,desc:`ทะลุ LH@${lastLH.price.toFixed(0)}`};
+  return{choch:false,dir:null,desc:'ยังไม่เกิด'};
 }
 function detectBOS(sw,price){
-const hs=sw.filter(s=>s.lbl===‘HH’);
-const ls=sw.filter(s=>s.lbl===‘LL’);
-const lHH=hs[hs.length-1],lLL=ls[ls.length-1];
-if(lHH&&price>lHH.price)return{bos:true,dir:‘UP’,price:lHH.price,desc:`ทะลุ HH@${lHH.price.toFixed(0)}`};
-if(lLL&&price<lLL.price)return{bos:true,dir:‘DOWN’,price:lLL.price,desc:`ทะลุ LL@${lLL.price.toFixed(0)}`};
-return{bos:false,dir:null,desc:‘ยังไม่เกิด’};
+  const hs=sw.filter(s=>s.lbl==='HH');
+  const ls=sw.filter(s=>s.lbl==='LL');
+  const lHH=hs[hs.length-1],lLL=ls[ls.length-1];
+  if(lHH&&price>lHH.price)return{bos:true,dir:'UP',price:lHH.price,desc:`ทะลุ HH@${lHH.price.toFixed(0)}`};
+  if(lLL&&price<lLL.price)return{bos:true,dir:'DOWN',price:lLL.price,desc:`ทะลุ LL@${lLL.price.toFixed(0)}`};
+  return{bos:false,dir:null,desc:'ยังไม่เกิด'};
 }
 function detectLiqSweep(sw,price,candles){
-if(!sw.length||!candles.length)return{sweep:false,type:null,level:null,desc:‘ไม่มี Sweep’};
-const rH=sw.filter(s=>s.type===‘H’).slice(-5);
-const rL=sw.filter(s=>s.type===‘L’).slice(-5);
-const prev=candles.length>1?candles[candles.length-2]:candles[0];
-const cur=candles[candles.length-1];
-for(const sh of rH){if(prev.h>sh.price&&cur.c<sh.price)return{sweep:true,type:‘Sell-side’,level:sh.price,desc:`ทะลุ H@${sh.price.toFixed(0)} แล้วกลับ`};}
-for(const sl of rL){if(prev.l<sl.price&&cur.c>sl.price)return{sweep:true,type:‘Buy-side’,level:sl.price,desc:`ทะลุ L@${sl.price.toFixed(0)} แล้วกลับ`};}
-const swH=rH.length?Math.max(…rH.map(s=>s.price)):null;
-const swL=rL.length?Math.min(…rL.map(s=>s.price)):null;
-if(swH&&Math.abs(price-swH)/swH<0.001)return{sweep:true,type:‘Sell-side’,level:swH,desc:`ใกล้ H@${swH.toFixed(0)}`};
-if(swL&&Math.abs(price-swL)/swL<0.001)return{sweep:true,type:‘Buy-side’,level:swL,desc:`ใกล้ L@${swL.toFixed(0)}`};
-return{sweep:false,type:null,level:null,desc:‘ไม่มี Sweep’};
+  if(!sw.length||!candles.length)return{sweep:false,type:null,level:null,desc:'ไม่มี Sweep'};
+  const rH=sw.filter(s=>s.type==='H').slice(-5);
+  const rL=sw.filter(s=>s.type==='L').slice(-5);
+  const prev=candles.length>1?candles[candles.length-2]:candles[0];
+  const cur=candles[candles.length-1];
+  for(const sh of rH){if(prev.h>sh.price&&cur.c<sh.price)return{sweep:true,type:'Sell-side',level:sh.price,desc:`ทะลุ H@${sh.price.toFixed(0)} แล้วกลับ`};}
+  for(const sl of rL){if(prev.l<sl.price&&cur.c>sl.price)return{sweep:true,type:'Buy-side',level:sl.price,desc:`ทะลุ L@${sl.price.toFixed(0)} แล้วกลับ`};}
+  const swH=rH.length?Math.max(...rH.map(s=>s.price)):null;
+  const swL=rL.length?Math.min(...rL.map(s=>s.price)):null;
+  if(swH&&Math.abs(price-swH)/swH<0.001)return{sweep:true,type:'Sell-side',level:swH,desc:`ใกล้ H@${swH.toFixed(0)}`};
+  if(swL&&Math.abs(price-swL)/swL<0.001)return{sweep:true,type:'Buy-side',level:swL,desc:`ใกล้ L@${swL.toFixed(0)}`};
+  return{sweep:false,type:null,level:null,desc:'ไม่มี Sweep'};
 }
 function calcFib(sw,trend){
-const hs=sw.filter(s=>s.type===‘H’),ls=sw.filter(s=>s.type===‘L’);
-if(!hs.length||!ls.length)return null;
-const swH=Math.max(…hs.slice(-5).map(s=>s.price));
-const swL=Math.min(…ls.slice(-5).map(s=>s.price));
-const range=swH-swL;
-if(trend===‘UPTREND’){
-const f618=swH-range*0.618,f786=swH-range*0.786;
-return{dir:‘UP’,high:swH,low:swL,f50:swH-range*0.5,f618,f786,
-goldZone:[Math.min(f618,f786),Math.max(f618,f786)]};
-}else{
-const f618=swL+range*0.618,f786=swL+range*0.786;
-return{dir:‘DOWN’,high:swH,low:swL,f50:swL+range*0.5,f618,f786,
-goldZone:[Math.min(f618,f786),Math.max(f618,f786)]};
-}
+  const hs=sw.filter(s=>s.type==='H'),ls=sw.filter(s=>s.type==='L');
+  if(!hs.length||!ls.length)return null;
+  const swH=Math.max(...hs.slice(-5).map(s=>s.price));
+  const swL=Math.min(...ls.slice(-5).map(s=>s.price));
+  const range=swH-swL;
+  if(trend==='UPTREND'){
+    const f618=swH-range*0.618,f786=swH-range*0.786;
+    return{dir:'UP',high:swH,low:swL,f50:swH-range*0.5,f618,f786,
+      goldZone:[Math.min(f618,f786),Math.max(f618,f786)]};
+  }else{
+    const f618=swL+range*0.618,f786=swL+range*0.786;
+    return{dir:'DOWN',high:swH,low:swL,f50:swL+range*0.5,f618,f786,
+      goldZone:[Math.min(f618,f786),Math.max(f618,f786)]};
+  }
 }
 
 // ── Order Block Detection ──────────────────────────────────
 // Bullish OB: last bearish candle before a strong bullish move (BOS up)
 // Bearish OB: last bullish candle before a strong bearish move (BOS down)
 function detectOrderBlocks(candles,sw){
-const obs=[];
-// Find BOS points to anchor OBs
-const hs=sw.filter(s=>s.lbl===‘HH’).slice(-3);
-const ls=sw.filter(s=>s.lbl===‘LL’).slice(-3);
-// Bearish OB: last bull candle before LL break
-for(const ll of ls){
-// Look back from ll.idx for last bull candle
-for(let i=ll.idx-1;i>=Math.max(0,ll.idx-15);i–){
-const c=candles[i];
-if(c&&c.c>c.o){
-obs.push({type:‘BEAR’,top:c.h,bot:c.l,open:c.o,close:c.c,idx:i,anchor:ll.price,t:c.t});
-break;
-}
-}
-}
-// Bullish OB: last bear candle before HH break
-for(const hh of hs){
-for(let i=hh.idx-1;i>=Math.max(0,hh.idx-15);i–){
-const c=candles[i];
-if(c&&c.c<c.o){
-obs.push({type:‘BULL’,top:c.h,bot:c.l,open:c.o,close:c.c,idx:i,anchor:hh.price,t:c.t});
-break;
-}
-}
-}
-// Keep only fresh OBs (price hasn’t passed through them yet)
-const price=S.gold||0;
-return obs.filter(ob=>{
-if(ob.type===‘BULL’)return price>ob.bot; // price above bottom = fresh
-if(ob.type===‘BEAR’)return price<ob.top; // price below top = fresh
-return true;
-}).slice(-4); // keep last 4
+  const obs=[];
+  // Find BOS points to anchor OBs
+  const hs=sw.filter(s=>s.lbl==='HH').slice(-3);
+  const ls=sw.filter(s=>s.lbl==='LL').slice(-3);
+  // Bearish OB: last bull candle before LL break
+  for(const ll of ls){
+    // Look back from ll.idx for last bull candle
+    for(let i=ll.idx-1;i>=Math.max(0,ll.idx-15);i--){
+      const c=candles[i];
+      if(c&&c.c>c.o){
+        obs.push({type:'BEAR',top:c.h,bot:c.l,open:c.o,close:c.c,idx:i,anchor:ll.price,t:c.t});
+        break;
+      }
+    }
+  }
+  // Bullish OB: last bear candle before HH break
+  for(const hh of hs){
+    for(let i=hh.idx-1;i>=Math.max(0,hh.idx-15);i--){
+      const c=candles[i];
+      if(c&&c.c<c.o){
+        obs.push({type:'BULL',top:c.h,bot:c.l,open:c.o,close:c.c,idx:i,anchor:hh.price,t:c.t});
+        break;
+      }
+    }
+  }
+  // Keep only fresh OBs (price hasn't passed through them yet)
+  const price=S.gold||0;
+  return obs.filter(ob=>{
+    if(ob.type==='BULL')return price>ob.bot; // price above bottom = fresh
+    if(ob.type==='BEAR')return price<ob.top; // price below top = fresh
+    return true;
+  }).slice(-4); // keep last 4
 }
 
 // ── Fair Value Gap Detection ───────────────────────────────
 // FVG: candle[i-1].high < candle[i+1].low (bullish gap)
 //       candle[i-1].low  > candle[i+1].high (bearish gap)
 function detectFVG(candles){
-const fvgs=[];
-for(let i=1;i<candles.length-1;i++){
-const prev=candles[i-1],cur=candles[i],next=candles[i+1];
-// Bullish FVG
-if(prev.h<next.l){
-fvgs.push({type:‘BULL’,top:next.l,bot:prev.h,mid:(next.l+prev.h)/2,idx:i,t:cur.t});
-}
-// Bearish FVG
-if(prev.l>next.h){
-fvgs.push({type:‘BEAR’,top:prev.l,bot:next.h,mid:(prev.l+next.h)/2,idx:i,t:cur.t});
-}
-}
-// Filter: only fresh (price hasn’t closed through them)
-const price=S.gold||0;
-return fvgs.filter(g=>{
-if(g.type===‘BULL’)return price>g.bot&&price<g.top*1.03;
-if(g.type===‘BEAR’)return price<g.top&&price>g.bot*0.97;
-return true;
-}).slice(-4);
+  const fvgs=[];
+  for(let i=1;i<candles.length-1;i++){
+    const prev=candles[i-1],cur=candles[i],next=candles[i+1];
+    // Bullish FVG
+    if(prev.h<next.l){
+      fvgs.push({type:'BULL',top:next.l,bot:prev.h,mid:(next.l+prev.h)/2,idx:i,t:cur.t});
+    }
+    // Bearish FVG
+    if(prev.l>next.h){
+      fvgs.push({type:'BEAR',top:prev.l,bot:next.h,mid:(prev.l+next.h)/2,idx:i,t:cur.t});
+    }
+  }
+  // Filter: only fresh (price hasn't closed through them)
+  const price=S.gold||0;
+  return fvgs.filter(g=>{
+    if(g.type==='BULL')return price>g.bot&&price<g.top*1.03;
+    if(g.type==='BEAR')return price<g.top&&price>g.bot*0.97;
+    return true;
+  }).slice(-4);
 }
 
 // ── Full SMC Analysis ──────────────────────────────────────
 function computeSMC(){
-if(!S.gold) return null;
-// Use cache if price hasn’t changed much
-if(S.smcCache&&Math.abs(S.smcCache.price-S.gold)<0.5) return S.smcCache;
+  if(!S.gold) return null;
+  // Use cache if price hasn't changed much
+  if(S.smcCache&&Math.abs(S.smcCache.price-S.gold)<0.5) return S.smcCache;
 
-const price=S.gold;
-function analyzeTF(tf,pivot){
-const candles=getCandles(tf);
-const sw=detectSwings(candles,pivot);
-const lab=labelSwings(sw);
-const trend=detectTrend(lab);
-const choch=detectCHoCH(lab,price);
-const bos=detectBOS(lab,price);
-const liq=detectLiqSweep(sw,price,candles);
-const fib=calcFib(sw,trend);
-const obs=detectOrderBlocks(candles,lab);
-const fvgs=detectFVG(candles);
-const inGolden=fib?(price>=fib.goldZone[0]&&price<=fib.goldZone[1]):false;
-// Check if price is in any OB
-const inBullOB=obs.some(ob=>ob.type===‘BULL’&&price>=ob.bot&&price<=ob.top);
-const inBearOB=obs.some(ob=>ob.type===‘BEAR’&&price>=ob.bot&&price<=ob.top);
-// Check if price is in any FVG
-const inBullFVG=fvgs.some(g=>g.type===‘BULL’&&price>=g.bot&&price<=g.top);
-const inBearFVG=fvgs.some(g=>g.type===‘BEAR’&&price>=g.bot&&price<=g.top);
-return{tf,candles,sw,lab,trend,choch,bos,liq,fib,obs,fvgs,inGolden,inBullOB,inBearOB,inBullFVG,inBearFVG,last5:lab.slice(-5)};
-}
-const tf4H=analyzeTF(‘4H’,4);
-const tf1H=analyzeTF(‘1H’,3);
-const tf15m=analyzeTF(‘15m’,3);
+  const price=S.gold;
+  function analyzeTF(tf,pivot){
+    const candles=getCandles(tf);
+    const sw=detectSwings(candles,pivot);
+    const lab=labelSwings(sw);
+    const trend=detectTrend(lab);
+    const choch=detectCHoCH(lab,price);
+    const bos=detectBOS(lab,price);
+    const liq=detectLiqSweep(sw,price,candles);
+    const fib=calcFib(sw,trend);
+    const obs=detectOrderBlocks(candles,lab);
+    const fvgs=detectFVG(candles);
+    const inGolden=fib?(price>=fib.goldZone[0]&&price<=fib.goldZone[1]):false;
+    // Check if price is in any OB
+    const inBullOB=obs.some(ob=>ob.type==='BULL'&&price>=ob.bot&&price<=ob.top);
+    const inBearOB=obs.some(ob=>ob.type==='BEAR'&&price>=ob.bot&&price<=ob.top);
+    // Check if price is in any FVG
+    const inBullFVG=fvgs.some(g=>g.type==='BULL'&&price>=g.bot&&price<=g.top);
+    const inBearFVG=fvgs.some(g=>g.type==='BEAR'&&price>=g.bot&&price<=g.top);
+    return{tf,candles,sw,lab,trend,choch,bos,liq,fib,obs,fvgs,inGolden,inBullOB,inBearOB,inBullFVG,inBearFVG,last5:lab.slice(-5)};
+  }
+  const tf4H=analyzeTF('4H',4);
+  const tf1H=analyzeTF('1H',3);
+  const tf15m=analyzeTF('15m',3);
 
-// Multi-TF alignment
-const tHTF=tf4H.trend,tMTF=tf1H.trend,tLTF=tf15m.trend;
-const bullAlign=tHTF===‘UPTREND’&&(tMTF===‘UPTREND’||tLTF===‘UPTREND’);
-const bearAlign=tHTF===‘DOWNTREND’&&(tMTF===‘DOWNTREND’||tLTF===‘DOWNTREND’);
-let allow=‘WAIT’;
-if(bullAlign)allow=‘BUY’;else if(bearAlign)allow=‘SELL’;
+  // Multi-TF alignment
+  const tHTF=tf4H.trend,tMTF=tf1H.trend,tLTF=tf15m.trend;
+  const bullAlign=tHTF==='UPTREND'&&(tMTF==='UPTREND'||tLTF==='UPTREND');
+  const bearAlign=tHTF==='DOWNTREND'&&(tMTF==='DOWNTREND'||tLTF==='DOWNTREND');
+  let allow='WAIT';
+  if(bullAlign)allow='BUY';else if(bearAlign)allow='SELL';
 
-// Primary CHoCH/BOS from 1H, fallback 4H
-const choch=tf1H.choch.choch?tf1H.choch:tf4H.choch;
-const bos=tf1H.bos.bos?tf1H.bos:tf4H.bos;
-// Liq: prefer 1H
-const liq=tf1H.liq.sweep?tf1H.liq:tf4H.liq.sweep?tf4H.liq:tf15m.liq.sweep?tf15m.liq:tf1H.liq;
-// Fib + OB + FVG from 4H (HTF)
-const fib=tf4H.fib||tf1H.fib;
-const inGolden=fib?(price>=fib.goldZone[0]&&price<=fib.goldZone[1]):false;
-const obs4H=tf4H.obs,fvgs4H=tf4H.fvgs;
-const inBullOB=obs4H.some(o=>o.type===‘BULL’&&price>=o.bot&&price<=o.top)||tf1H.inBullOB;
-const inBearOB=obs4H.some(o=>o.type===‘BEAR’&&price>=o.bot&&price<=o.top)||tf1H.inBearOB;
-const inFVG=tf4H.inBullFVG||tf4H.inBearFVG||tf1H.inBullFVG||tf1H.inBearFVG;
+  // Primary CHoCH/BOS from 1H, fallback 4H
+  const choch=tf1H.choch.choch?tf1H.choch:tf4H.choch;
+  const bos=tf1H.bos.bos?tf1H.bos:tf4H.bos;
+  // Liq: prefer 1H
+  const liq=tf1H.liq.sweep?tf1H.liq:tf4H.liq.sweep?tf4H.liq:tf15m.liq.sweep?tf15m.liq:tf1H.liq;
+  // Fib + OB + FVG from 4H (HTF)
+  const fib=tf4H.fib||tf1H.fib;
+  const inGolden=fib?(price>=fib.goldZone[0]&&price<=fib.goldZone[1]):false;
+  const obs4H=tf4H.obs,fvgs4H=tf4H.fvgs;
+  const inBullOB=obs4H.some(o=>o.type==='BULL'&&price>=o.bot&&price<=o.top)||tf1H.inBullOB;
+  const inBearOB=obs4H.some(o=>o.type==='BEAR'&&price>=o.bot&&price<=o.top)||tf1H.inBearOB;
+  const inFVG=tf4H.inBullFVG||tf4H.inBearFVG||tf1H.inBullFVG||tf1H.inBearFVG;
 
-// Confidence
-let conf=0,reasons=[];
-if(tHTF!==‘SIDEWAY’){conf+=25;reasons.push(’HTF ’+tHTF);}
-if(bullAlign||bearAlign){conf+=20;reasons.push(‘MTF aligned’);}
-if(liq.sweep){conf+=15;reasons.push(’Liq Sweep ’+liq.type);}
-if(choch.choch){conf+=15;reasons.push(’CHoCH ’+choch.dir);}
-if(bos.bos){conf+=10;reasons.push(’BOS ’+bos.dir);}
-if(inGolden){conf+=10;reasons.push(‘Golden Zone’);}
-if(inBullOB&&allow===‘BUY’){conf+=10;reasons.push(‘In Bull OB’);}
-if(inBearOB&&allow===‘SELL’){conf+=10;reasons.push(‘In Bear OB’);}
-if(inFVG){conf+=5;reasons.push(‘In FVG’);}
-conf=Math.min(conf,100);
+  // Confidence
+  let conf=0,reasons=[];
+  if(tHTF!=='SIDEWAY'){conf+=25;reasons.push('HTF '+tHTF);}
+  if(bullAlign||bearAlign){conf+=20;reasons.push('MTF aligned');}
+  if(liq.sweep){conf+=15;reasons.push('Liq Sweep '+liq.type);}
+  if(choch.choch){conf+=15;reasons.push('CHoCH '+choch.dir);}
+  if(bos.bos){conf+=10;reasons.push('BOS '+bos.dir);}
+  if(inGolden){conf+=10;reasons.push('Golden Zone');}
+  if(inBullOB&&allow==='BUY'){conf+=10;reasons.push('In Bull OB');}
+  if(inBearOB&&allow==='SELL'){conf+=10;reasons.push('In Bear OB');}
+  if(inFVG){conf+=5;reasons.push('In FVG');}
+  conf=Math.min(conf,100);
 
-let signal=‘WAIT’;
-if(conf>=45&&allow!==‘WAIT’)signal=allow;
-else if(conf>=30&&tHTF!==‘SIDEWAY’)signal=tHTF===‘UPTREND’?‘BUY’:‘SELL’;
+  let signal='WAIT';
+  if(conf>=45&&allow!=='WAIT')signal=allow;
+  else if(conf>=30&&tHTF!=='SIDEWAY')signal=tHTF==='UPTREND'?'BUY':'SELL';
 
-const result={price,signal,allow,conf,reason:reasons.join(’ · ’),
-tHTF,tMTF,tLTF,choch,bos,liq,fib,inGolden,obs4H,fvgs4H,inBullOB,inBearOB,inFVG,
-tf4H,tf1H,tf15m,last5:tf4H.last5};
-S.smcCache=result;
-return result;
+  const result={price,signal,allow,conf,reason:reasons.join(' · '),
+    tHTF,tMTF,tLTF,choch,bos,liq,fib,inGolden,obs4H,fvgs4H,inBullOB,inBearOB,inFVG,
+    tf4H,tf1H,tf15m,last5:tf4H.last5};
+  S.smcCache=result;
+  return result;
 }
 
 // ─── Main Compute ──────────────────────────────────────────
 function compute(){
-if(!S.gold)return null;
-const m=MODES[S.mode],w=m.w,g=S.gold,d=S.dxy;
-const hasDXY=d!==null&&d!==undefined;
-let sc={smc:0,fib:0,ob:0,corr:0,vol:0};
+  if(!S.gold)return null;
+  const m=MODES[S.mode],w=m.w,g=S.gold,d=S.dxy;
+  const hasDXY=d!==null&&d!==undefined;
+  let sc={smc:0,fib:0,ob:0,corr:0,vol:0};
 
-// Get SMC data
-const smc=computeSMC();
-const trend=smc?.tHTF||‘SIDEWAY’;
+  // Get SMC data
+  const smc=computeSMC();
+  const trend=smc?.tHTF||'SIDEWAY';
 
-// Fib from 4H
-const fib=smc?.fib;
-let fH=S.gold*1.01,fL=S.gold*0.99,fibRange=S.gold*0.02;
-let f618=fH-fibRange*0.618,f786=fH-fibRange*0.786;
-let goldenLow,goldenHigh;
-if(fib){fH=fib.high;fL=fib.low;fibRange=fH-fL;f618=fib.f618;f786=fib.f786;goldenLow=fib.goldZone[0];goldenHigh=fib.goldZone[1];}
-else{goldenLow=Math.min(f618,f786);goldenHigh=Math.max(f618,f786);}
+  // Fib from 4H
+  const fib=smc?.fib;
+  let fH=S.gold*1.01,fL=S.gold*0.99,fibRange=S.gold*0.02;
+  let f618=fH-fibRange*0.618,f786=fH-fibRange*0.786;
+  let goldenLow,goldenHigh;
+  if(fib){fH=fib.high;fL=fib.low;fibRange=fH-fL;f618=fib.f618;f786=fib.f786;goldenLow=fib.goldZone[0];goldenHigh=fib.goldZone[1];}
+  else{goldenLow=Math.min(f618,f786);goldenHigh=Math.max(f618,f786);}
 
-// SMC score
-const bos=smc?.bos?.bos||false,choch=smc?.choch?.choch||false,liqSweep=smc?.liq?.sweep||false;
-if(trend!==‘SIDEWAY’)sc.smc+=Math.round(w.smc*0.4);
-if(choch)sc.smc+=Math.round(w.smc*0.3);
-if(bos)sc.smc+=Math.round(w.smc*0.2);
-if(liqSweep)sc.smc+=Math.round(w.smc*0.1);
-sc.smc=Math.min(sc.smc,w.smc);
+  // SMC score
+  const bos=smc?.bos?.bos||false,choch=smc?.choch?.choch||false,liqSweep=smc?.liq?.sweep||false;
+  if(trend!=='SIDEWAY')sc.smc+=Math.round(w.smc*0.4);
+  if(choch)sc.smc+=Math.round(w.smc*0.3);
+  if(bos)sc.smc+=Math.round(w.smc*0.2);
+  if(liqSweep)sc.smc+=Math.round(w.smc*0.1);
+  sc.smc=Math.min(sc.smc,w.smc);
 
-// Fib score
-const inGolden=g>=goldenLow&&g<=goldenHigh;
-const nearGolden=!inGolden&&Math.min(Math.abs(g-goldenLow),Math.abs(g-goldenHigh))<fibRange*0.12;
-if(inGolden)sc.fib+=Math.round(w.fib*0.8);
-else if(nearGolden)sc.fib+=Math.round(w.fib*0.4);
-else if(g>=fL&&g<=fH)sc.fib+=Math.round(w.fib*0.2);
-sc.fib=Math.min(sc.fib,w.fib);
+  // Fib score
+  const inGolden=g>=goldenLow&&g<=goldenHigh;
+  const nearGolden=!inGolden&&Math.min(Math.abs(g-goldenLow),Math.abs(g-goldenHigh))<fibRange*0.12;
+  if(inGolden)sc.fib+=Math.round(w.fib*0.8);
+  else if(nearGolden)sc.fib+=Math.round(w.fib*0.4);
+  else if(g>=fL&&g<=fH)sc.fib+=Math.round(w.fib*0.2);
+  sc.fib=Math.min(sc.fib,w.fib);
 
-// Order Block + FVG score (new in v9)
-const inBullOB=smc?.inBullOB||false,inBearOB=smc?.inBearOB||false,inFVG=smc?.inFVG||false;
-if(inBullOB&&(trend===‘UPTREND’||trend===‘SIDEWAY’))sc.ob+=Math.round(w.ob*0.6);
-if(inBearOB&&(trend===‘DOWNTREND’||trend===‘SIDEWAY’))sc.ob+=Math.round(w.ob*0.6);
-if(inFVG)sc.ob+=Math.round(w.ob*0.4);
-sc.ob=Math.min(sc.ob,w.ob);
+  // Order Block + FVG score (new in v9)
+  const inBullOB=smc?.inBullOB||false,inBearOB=smc?.inBearOB||false,inFVG=smc?.inFVG||false;
+  if(inBullOB&&(trend==='UPTREND'||trend==='SIDEWAY'))sc.ob+=Math.round(w.ob*0.6);
+  if(inBearOB&&(trend==='DOWNTREND'||trend==='SIDEWAY'))sc.ob+=Math.round(w.ob*0.6);
+  if(inFVG)sc.ob+=Math.round(w.ob*0.4);
+  sc.ob=Math.min(sc.ob,w.ob);
 
-// DXY Correlation
-let dBull=false,dBear=false,al=false;
-if(hasDXY){
-dBull=d>99.5;dBear=d<99.0;
-const sellA=dBull&&trend===‘DOWNTREND’,buyA=dBear&&trend===‘UPTREND’;
-al=sellA||buyA;
-if(al)sc.corr+=Math.round(w.corr*0.7);
-else if(trend!==‘SIDEWAY’)sc.corr+=Math.round(w.corr*0.4);
-if(dBull||dBear)sc.corr+=Math.round(w.corr*0.1);
-sc.corr=Math.min(sc.corr,w.corr);
-}else{if(trend!==‘SIDEWAY’)sc.corr=Math.round(w.corr*0.3);}
+  // DXY Correlation
+  let dBull=false,dBear=false,al=false;
+  if(hasDXY){
+    dBull=d>99.5;dBear=d<99.0;
+    const sellA=dBull&&trend==='DOWNTREND',buyA=dBear&&trend==='UPTREND';
+    al=sellA||buyA;
+    if(al)sc.corr+=Math.round(w.corr*0.7);
+    else if(trend!=='SIDEWAY')sc.corr+=Math.round(w.corr*0.4);
+    if(dBull||dBear)sc.corr+=Math.round(w.corr*0.1);
+    sc.corr=Math.min(sc.corr,w.corr);
+  }else{if(trend!=='SIDEWAY')sc.corr=Math.round(w.corr*0.3);}
 
-const se=sess();
-sc.vol=Math.min(Math.round(se.pts/20*w.vol),w.vol);
+  const se=sess();
+  sc.vol=Math.min(Math.round(se.pts/20*w.vol),w.vol);
 
-const tot=sc.smc+sc.fib+sc.ob+sc.corr+sc.vol;
+  const tot=sc.smc+sc.fib+sc.ob+sc.corr+sc.vol;
 
-// Side
-let side=‘WAIT’;
-const passScore=tot>=m.minScore;
-const passSMC=bos||choch||trend!==‘SIDEWAY’;
-if(passScore&&passSMC){
-if(trend===‘DOWNTREND’)side=‘SELL’;
-else if(trend===‘UPTREND’)side=‘BUY’;
-}
+  // Side
+  let side='WAIT';
+  const passScore=tot>=m.minScore;
+  const passSMC=bos||choch||trend!=='SIDEWAY';
+  if(passScore&&passSMC){
+    if(trend==='DOWNTREND')side='SELL';
+    else if(trend==='UPTREND')side='BUY';
+  }
 
-// SL/TP — try OB level first, then liq level, then %
-const entry=g,isSell=side===‘SELL’;
-let sl,tp1,tp2,slSrc=’%’;
-// Try: SL above nearest Bear OB (SELL) or below Bull OB (BUY)
-const obs=smc?.obs4H||[];
-const relevantOB=isSell?obs.filter(o=>o.type===‘BEAR’&&o.top>entry).sort((a,b)=>a.top-b.top)[0]
-:obs.filter(o=>o.type===‘BULL’&&o.bot<entry).sort((a,b)=>b.bot-a.bot)[0];
-if(relevantOB){
-if(isSell){sl=relevantOB.top*1.0005;slSrc=‘Bear OB’;}
-else{sl=relevantOB.bot*0.9995;slSrc=‘Bull OB’;}
-}else if(smc?.liq?.level&&smc.liq.sweep){
-const lv=smc.liq.level;
-sl=isSell?Math.max(lv,entry)*1.001:Math.min(lv,entry)*0.999;
-slSrc=‘Liq Level’;
-}else{sl=isSell?entry*(1+m.slPct/100):entry*(1-m.slPct/100);slSrc=’%SL’;}
+  // SL/TP — try OB level first, then liq level, then %
+  const entry=g,isSell=side==='SELL';
+  let sl,tp1,tp2,slSrc='%';
+  // Try: SL above nearest Bear OB (SELL) or below Bull OB (BUY)
+  const obs=smc?.obs4H||[];
+  const relevantOB=isSell?obs.filter(o=>o.type==='BEAR'&&o.top>entry).sort((a,b)=>a.top-b.top)[0]
+                         :obs.filter(o=>o.type==='BULL'&&o.bot<entry).sort((a,b)=>b.bot-a.bot)[0];
+  if(relevantOB){
+    if(isSell){sl=relevantOB.top*1.0005;slSrc='Bear OB';}
+    else{sl=relevantOB.bot*0.9995;slSrc='Bull OB';}
+  }else if(smc?.liq?.level&&smc.liq.sweep){
+    const lv=smc.liq.level;
+    sl=isSell?Math.max(lv,entry)*1.001:Math.min(lv,entry)*0.999;
+    slSrc='Liq Level';
+  }else{sl=isSell?entry*(1+m.slPct/100):entry*(1-m.slPct/100);slSrc='%SL';}
 
-tp1=isSell?entry*(1-m.tp1Pct/100):entry*(1+m.tp1Pct/100);
-tp2=isSell?entry*(1-m.tp2Pct/100):entry*(1+m.tp2Pct/100);
-// Safety clamp
-if(isSell){sl=Math.max(sl,entry*1.001);tp1=Math.min(tp1,entry*0.999);tp2=Math.min(tp2,entry*0.998);}
-else{sl=Math.min(sl,entry*0.999);tp1=Math.max(tp1,entry*1.001);tp2=Math.max(tp2,entry*1.002);}
-const rr=Math.abs(entry-tp1)/Math.abs(entry-sl)||0;
+  tp1=isSell?entry*(1-m.tp1Pct/100):entry*(1+m.tp1Pct/100);
+  tp2=isSell?entry*(1-m.tp2Pct/100):entry*(1+m.tp2Pct/100);
+  // Safety clamp
+  if(isSell){sl=Math.max(sl,entry*1.001);tp1=Math.min(tp1,entry*0.999);tp2=Math.min(tp2,entry*0.998);}
+  else{sl=Math.min(sl,entry*0.999);tp1=Math.max(tp1,entry*1.001);tp2=Math.max(tp2,entry*1.002);}
+  const rr=Math.abs(entry-tp1)/Math.abs(entry-sl)||0;
 
-// Zones
-const zR=`${goldenHigh.toFixed(0)}–${(goldenHigh+fibRange*0.03).toFixed(0)}`;
-const zE=`${goldenLow.toFixed(0)}–${goldenHigh.toFixed(0)}`;
-const zS=`${fL.toFixed(0)}–${(fL+fibRange*0.04).toFixed(0)}`;
+  // Zones
+  const zR=`${goldenHigh.toFixed(0)}–${(goldenHigh+fibRange*0.03).toFixed(0)}`;
+  const zE=`${goldenLow.toFixed(0)}–${goldenHigh.toFixed(0)}`;
+  const zS=`${fL.toFixed(0)}–${(fL+fibRange*0.04).toFixed(0)}`;
 
-return{tot,sc,side,entry,sl,tp1,tp2,rr,slSrc,
-bos,choch,inGolden,al,liqSweep,inBullOB,inBearOB,inFVG,
-dBull,dBear,se,fH,fL,f618,f786,goldenLow,goldenHigh,g,d:d||0,
-trend,zR,zE,zS,smc,hasDXY,passScore,passSMC};
+  return{tot,sc,side,entry,sl,tp1,tp2,rr,slSrc,
+    bos,choch,inGolden,al,liqSweep,inBullOB,inBearOB,inFVG,
+    dBull,dBear,se,fH,fL,f618,f786,goldenLow,goldenHigh,g,d:d||0,
+    trend,zR,zE,zS,smc,hasDXY,passScore,passSMC};
 }
 
 // ─── Render ───────────────────────────────────────────────
 function render(){
-const r=compute();if(!r)return;
-const m=MODES[S.mode],w=m.w,now=new Date().toLocaleTimeString(‘th-TH’,{hour:‘2-digit’,minute:‘2-digit’});
-const gC=S.goldCh||0,gP=S.goldChp||0;
-document.getElementById(‘gP’).textContent=S.gold.toLocaleString(‘en-US’,{minimumFractionDigits:2,maximumFractionDigits:2});
-const ge=document.getElementById(‘gC’);
-ge.textContent=`${gC>=0?'▲':'▼'} ${Math.abs(gC).toFixed(2)} (${Math.abs(gP).toFixed(2)}%)`;
-ge.className=‘pc2 ‘+(gC>=0?‘up’:‘dn’);
-document.getElementById(‘gT’).textContent=‘🟢 ‘+now;
-const dC=S.dxyPrev?r.d-S.dxyPrev:0,dPp=S.dxyPrev?dC/S.dxyPrev*100:0;
-document.getElementById(‘dP’).textContent=r.d.toFixed(3)+(S.dxyManual!==null?’ ✎’:’’);
-const de=document.getElementById(‘dC’);
-de.textContent=`${dC>=0?'▲':'▼'} ${Math.abs(dC).toFixed(3)} (${Math.abs(dPp).toFixed(2)}%)`;
-de.className=‘pc2 ‘+(dC>=0?‘up’:‘dn’);
-document.getElementById(‘dT’).textContent=‘🟢 ‘+now;
-spk(‘sk1’,S.goldSpk,’#ffd44d’);spk(‘sk2’,S.dxySpk,’#18eeff’);
+  const r=compute();if(!r)return;
+  const m=MODES[S.mode],w=m.w,now=new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  const gC=S.goldCh||0,gP=S.goldChp||0;
+  document.getElementById('gP').textContent=S.gold.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const ge=document.getElementById('gC');
+  ge.textContent=`${gC>=0?'▲':'▼'} ${Math.abs(gC).toFixed(2)} (${Math.abs(gP).toFixed(2)}%)`;
+  ge.className='pc2 '+(gC>=0?'up':'dn');
+  document.getElementById('gT').textContent='🟢 '+now;
+  const dC=S.dxyPrev?r.d-S.dxyPrev:0,dPp=S.dxyPrev?dC/S.dxyPrev*100:0;
+  document.getElementById('dP').textContent=r.d.toFixed(3)+(S.dxyManual!==null?' ✎':'');
+  const de=document.getElementById('dC');
+  de.textContent=`${dC>=0?'▲':'▼'} ${Math.abs(dC).toFixed(3)} (${Math.abs(dPp).toFixed(2)}%)`;
+  de.className='pc2 '+(dC>=0?'up':'dn');
+  document.getElementById('dT').textContent='🟢 '+now;
+  spk('sk1',S.goldSpk,'#ffd44d');spk('sk2',S.dxySpk,'#18eeff');
 
-// Dial
-const arc=document.getElementById(‘dArc’);
-arc.style.strokeDashoffset=283-(r.tot/100)*283;
-arc.style.stroke=r.side===‘SELL’?‘url(#gS)’:r.side===‘BUY’?‘url(#gB)’:‘var(–gold)’;
-animN(‘dNum’,r.tot,1000);
-document.getElementById(‘dNum’).style.color=r.tot>=75?‘var(–red)’:r.tot>=50?‘var(–gold)’:‘var(–cyan)’;
-document.getElementById(‘mLbl’).textContent=m.label;
+  // Dial
+  const arc=document.getElementById('dArc');
+  arc.style.strokeDashoffset=283-(r.tot/100)*283;
+  arc.style.stroke=r.side==='SELL'?'url(#gS)':r.side==='BUY'?'url(#gB)':'var(--gold)';
+  animN('dNum',r.tot,1000);
+  document.getElementById('dNum').style.color=r.tot>=75?'var(--red)':r.tot>=50?'var(--gold)':'var(--cyan)';
+  document.getElementById('mLbl').textContent=m.label;
 
-// Score bars
-document.getElementById(‘sBars’).innerHTML=[
-{n:‘SMC’,max:w.smc,v:r.sc.smc,c:’#ffd44d’},
-{n:‘FIB’,max:w.fib,v:r.sc.fib,c:’#c97fff’},
-{n:‘OB+FVG’,max:w.ob,v:r.sc.ob,c:’#ff9500’},
-{n:‘DXY’,max:w.corr,v:r.sc.corr,c:’#18eeff’},
-{n:‘SESSION’,max:w.vol,v:r.sc.vol,c:’#00ffaa’},
-].map(b=>`<div class="sb3"><div class="sbn">${b.n}</div> <div class="sbt"><div class="sbf" style="width:${b.v/b.max*100}%;background:${b.c}"></div></div> <div class="sbv" style="color:${b.c}">${b.v}</div></div>`).join(’’);
+  // Score bars
+  document.getElementById('sBars').innerHTML=[
+    {n:'SMC',max:w.smc,v:r.sc.smc,c:'#ffd44d'},
+    {n:'FIB',max:w.fib,v:r.sc.fib,c:'#c97fff'},
+    {n:'OB+FVG',max:w.ob,v:r.sc.ob,c:'#ff9500'},
+    {n:'DXY',max:w.corr,v:r.sc.corr,c:'#18eeff'},
+    {n:'SESSION',max:w.vol,v:r.sc.vol,c:'#00ffaa'},
+  ].map(b=>`<div class="sb3"><div class="sbn">${b.n}</div>
+    <div class="sbt"><div class="sbf" style="width:${b.v/b.max*100}%;background:${b.c}"></div></div>
+    <div class="sbv" style="color:${b.c}">${b.v}</div></div>`).join('');
 
-// Signal banner
-const sb=document.getElementById(‘sigB’);
-if(r.tot>=m.minScore){
-sb.className=`sig show ${r.side==='SELL'?'sell':r.side==='BUY'?'buy':'wait'}`;
-document.getElementById(‘sigT’).textContent=r.side===‘SELL’?‘🔴 SELL SIGNAL’:r.side===‘BUY’?‘🟢 BUY SIGNAL’:‘⚡ MONITOR’;
-document.getElementById(‘sigS’).textContent=`${r.tot}/100 · ${m.label} · R:R ${r.rr.toFixed(1)}`;
-document.getElementById(‘sigN’).textContent=r.tot;
-if(S.alarmOn)alarm();
-}else sb.classList.remove(‘show’);
+  // Signal banner
+  const sb=document.getElementById('sigB');
+  if(r.tot>=m.minScore){
+    sb.className=`sig show ${r.side==='SELL'?'sell':r.side==='BUY'?'buy':'wait'}`;
+    document.getElementById('sigT').textContent=r.side==='SELL'?'🔴 SELL SIGNAL':r.side==='BUY'?'🟢 BUY SIGNAL':'⚡ MONITOR';
+    document.getElementById('sigS').textContent=`${r.tot}/100 · ${m.label} · R:R ${r.rr.toFixed(1)}`;
+    document.getElementById('sigN').textContent=r.tot;
+    if(S.alarmOn)alarm();
+  }else sb.classList.remove('show');
 
-// Conditions
-document.getElementById(‘cList’).innerHTML=[
-{name:`SMC Trend (HTF 4H)`,ico:r.trend!==‘SIDEWAY’?‘✅’:‘❌’,cls:r.trend!==‘SIDEWAY’?‘pass’:‘fail’,
-desc:‘HH/HL/LH/LL Pivot-9 จาก OHLC จริง’,val:`Trend: ${r.trend} · BOS:${r.bos?'✓':'✗'} CHoCH:${r.choch?'✓':'✗'}`},
-{name:‘Order Block (4H+1H)’,ico:(r.inBullOB||r.inBearOB)?‘✅’:‘⚠️’,cls:(r.inBullOB||r.inBearOB)?‘pass’:‘warn’,
-desc:‘แท่งสุดท้ายก่อน BOS — สถาบันวางออร์เดอร์’,val:`Bull OB:${r.inBullOB?'✓':'✗'} · Bear OB:${r.inBearOB?'✓':'✗'}`},
-{name:‘Fair Value Gap (FVG)’,ico:r.inFVG?‘✅’:‘⚠️’,cls:r.inFVG?‘pass’:‘warn’,
-desc:‘ช่องว่างราคา 3 แท่ง ตลาดมักกลับมาเติม’,val:`ราคา ${r.inFVG?'✓ อยู่ใน FVG':'ยังไม่ถึง FVG'}`},
-{name:‘Liquidity Sweep’,ico:r.liqSweep?‘✅’:‘⚠️’,cls:r.liqSweep?‘pass’:‘warn’,
-desc:‘ทะลุ High/Low เดิม แล้วกลับ = กวาด Stop’,val:r.smc?.liq?.desc||‘ไม่มี Sweep’},
-{name:‘Fibonacci Golden Zone’,ico:r.inGolden?‘✅’:‘⚠️’,cls:r.inGolden?‘pass’:‘warn’,
-desc:`61.8%=${r.f618.toFixed(0)} – 78.6%=${r.f786.toFixed(0)} (4H OHLC จริง)`,
-val:`${r.g.toFixed(2)} ${r.inGolden?'✓ IN ZONE':'ยังไม่ถึง'}`},
-{name:‘DXY Correlation’,ico:(r.hasDXY&&r.al)?‘✅’:r.hasDXY?‘⚠️’:‘❌’,cls:(r.hasDXY&&r.al)?‘pass’:r.hasDXY?‘warn’:‘fail’,
-desc:r.hasDXY?‘DXY >99.5 = Bear Gold · DXY <99 = Bull Gold’:‘รอข้อมูล DXY’,
-val:r.hasDXY?`DXY ${r.d.toFixed(3)} ${r.al?'✓ ALIGNED':'MIXED'}`:‘รอ DXY…’},
-{name:`Session · ${r.se.name}`,ico:r.se.ok?‘✅’:‘⚠️’,cls:r.se.ok?‘pass’:‘warn’,
-desc:‘London/NY = High Vol · ดีที่สุดสำหรับเทรด’,val:`${r.se.name} · ${r.se.pts}/20pts`},
-{name:`Score ≥ ${m.minScore}pts`,ico:r.tot>=m.minScore?‘✅’:‘❌’,cls:r.tot>=m.minScore?‘pass’:‘fail’,
-desc:`Mode ${m.label} ต้องการ ≥ ${m.minScore} จาก 100`,val:`${r.tot}/100 ${r.tot>=m.minScore?'✓ PASS':'✗ FAIL'}`},
-].map(c=>`<div class="ci2 ${c.cls}"><div class="cico">${c.ico}</div> <div><div class="cname">${c.name}</div><div class="cdesc">${c.desc}</div> <div class="cval">${c.val}</div></div></div>`).join(’’);
+  // Conditions
+  document.getElementById('cList').innerHTML=[
+    {name:`SMC Trend (HTF 4H)`,ico:r.trend!=='SIDEWAY'?'✅':'❌',cls:r.trend!=='SIDEWAY'?'pass':'fail',
+      desc:'HH/HL/LH/LL Pivot-9 จาก OHLC จริง',val:`Trend: ${r.trend} · BOS:${r.bos?'✓':'✗'} CHoCH:${r.choch?'✓':'✗'}`},
+    {name:'Order Block (4H+1H)',ico:(r.inBullOB||r.inBearOB)?'✅':'⚠️',cls:(r.inBullOB||r.inBearOB)?'pass':'warn',
+      desc:'แท่งสุดท้ายก่อน BOS — สถาบันวางออร์เดอร์',val:`Bull OB:${r.inBullOB?'✓':'✗'} · Bear OB:${r.inBearOB?'✓':'✗'}`},
+    {name:'Fair Value Gap (FVG)',ico:r.inFVG?'✅':'⚠️',cls:r.inFVG?'pass':'warn',
+      desc:'ช่องว่างราคา 3 แท่ง ตลาดมักกลับมาเติม',val:`ราคา ${r.inFVG?'✓ อยู่ใน FVG':'ยังไม่ถึง FVG'}`},
+    {name:'Liquidity Sweep',ico:r.liqSweep?'✅':'⚠️',cls:r.liqSweep?'pass':'warn',
+      desc:'ทะลุ High/Low เดิม แล้วกลับ = กวาด Stop',val:r.smc?.liq?.desc||'ไม่มี Sweep'},
+    {name:'Fibonacci Golden Zone',ico:r.inGolden?'✅':'⚠️',cls:r.inGolden?'pass':'warn',
+      desc:`61.8%=${r.f618.toFixed(0)} – 78.6%=${r.f786.toFixed(0)} (4H OHLC จริง)`,
+      val:`${r.g.toFixed(2)} ${r.inGolden?'✓ IN ZONE':'ยังไม่ถึง'}`},
+    {name:'DXY Correlation',ico:(r.hasDXY&&r.al)?'✅':r.hasDXY?'⚠️':'❌',cls:(r.hasDXY&&r.al)?'pass':r.hasDXY?'warn':'fail',
+      desc:r.hasDXY?'DXY >99.5 = Bear Gold · DXY <99 = Bull Gold':'รอข้อมูล DXY',
+      val:r.hasDXY?`DXY ${r.d.toFixed(3)} ${r.al?'✓ ALIGNED':'MIXED'}`:'รอ DXY...'},
+    {name:`Session · ${r.se.name}`,ico:r.se.ok?'✅':'⚠️',cls:r.se.ok?'pass':'warn',
+      desc:'London/NY = High Vol · ดีที่สุดสำหรับเทรด',val:`${r.se.name} · ${r.se.pts}/20pts`},
+    {name:`Score ≥ ${m.minScore}pts`,ico:r.tot>=m.minScore?'✅':'❌',cls:r.tot>=m.minScore?'pass':'fail',
+      desc:`Mode ${m.label} ต้องการ ≥ ${m.minScore} จาก 100`,val:`${r.tot}/100 ${r.tot>=m.minScore?'✓ PASS':'✗ FAIL'}`},
+  ].map(c=>`<div class="ci2 ${c.cls}"><div class="cico">${c.ico}</div>
+    <div><div class="cname">${c.name}</div><div class="cdesc">${c.desc}</div>
+    <div class="cval">${c.val}</div></div></div>`).join('');
 
-// Decision tree
-const tCol=t=>t===‘UPTREND’?‘var(–green)’:t===‘DOWNTREND’?‘var(–red)’:‘var(–gold)’;
-document.getElementById(‘dTree’).innerHTML=`
-
+  // Decision tree
+  const tCol=t=>t==='UPTREND'?'var(--green)':t==='DOWNTREND'?'var(--red)':'var(--gold)';
+  document.getElementById('dTree').innerHTML=`
 <div class="dn4 dnt">📌 ${m.label} MIN:${m.minScore}pts R:R≥${m.rrMin} · ${S.apiKey?'🟢 REAL OHLC':'🟡 SYNTHETIC'}</div>
 <div class="dn4 di">HTF 4H: <b style="color:${tCol(r.trend)}">${r.trend}</b></div>
 <div class="dn4 di" style="margin-left:10px">CHoCH: ${r.choch?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--muted)">✗</span>'} · BOS: ${r.bos?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--muted)">✗</span>'}</div>
@@ -1086,9 +1094,8 @@ document.getElementById(‘dTree’).innerHTML=`
 <div class="dn4 dth">→ FINAL: <b style="color:${r.side==='BUY'?'var(--green)':r.side==='SELL'?'var(--red)':'var(--gold)'}">${r.side}</b></div>
 <div class="dn4 dnt">📡 Fetch#${S.fetchN} · ${S.lastFetch?.toLocaleTimeString('th-TH')||'--'}</div>`;
 
-// Formula
-document.getElementById(‘fBox’).innerHTML=`
-
+  // Formula
+  document.getElementById('fBox').innerHTML=`
 <div style="color:var(--muted);margin-bottom:6px">SCORE = SMC + FIB + OB/FVG + DXY + SESSION</div>
 <div class="fl"><span style="color:var(--muted)">SMC (Pivot-9) max=${w.smc}</span><span class="fp go">${r.sc.smc}pts</span></div>
 <div class="fl"><span style="color:var(--muted)">Fibonacci max=${w.fib}</span><span class="fp pu">${r.sc.fib}pts</span></div>
@@ -1098,59 +1105,57 @@ document.getElementById(‘fBox’).innerHTML=`
 <div class="fl tot"><span style="color:var(--text)">TOTAL</span><span class="fp big go">${r.tot}/100</span></div>
 <div style="margin-top:6px;font-size:10px;color:var(--muted)">SL source: ${r.slSrc} · TP1=${m.tp1Pct}% TP2=${m.tp2Pct}%</div>`;
 
-// Zones
-document.getElementById(‘zR’).textContent=r.zR;
-document.getElementById(‘zE’).textContent=r.zE;
-document.getElementById(‘zS’).textContent=r.zS;
+  // Zones
+  document.getElementById('zR').textContent=r.zR;
+  document.getElementById('zE').textContent=r.zE;
+  document.getElementById('zS').textContent=r.zS;
 
-// Trade plan
-const ts=document.getElementById(‘trSide’);
-if(r.side===‘SELL’){ts.textContent=‘● SELL’;ts.className=‘tr-s ts-sell’;}
-else if(r.side===‘BUY’){ts.textContent=‘● BUY’;ts.className=‘tr-s ts-buy’;}
-else{ts.textContent=‘◌ WAIT’;ts.className=‘tr-s ts-wait’;}
-document.getElementById(‘tSL’).textContent=r.sl.toFixed(0);
-document.getElementById(‘tEN’).textContent=r.entry.toFixed(0);
-document.getElementById(‘tTP’).textContent=r.tp1.toFixed(0);
-document.getElementById(‘rrR’).textContent=`1:${r.rr.toFixed(1)}`;
-document.getElementById(‘rrT2’).textContent=r.tp2.toFixed(0);
-const v=r.rr>=m.rrMin;
-document.getElementById(‘rrV’).textContent=v?‘VALID✓’:‘LOW✗’;
-document.getElementById(‘rrV’).style.color=v?‘var(–green)’:‘var(–red)’;
-document.getElementById(‘execNote’).innerHTML=`SL: ${r.slSrc} · TF: 4H+1H<br>${(r.side==='SELL'?r.sl>r.entry:r.sl<r.entry)?'<span style="color:var(--green)">✓ SL ถูกทิศ</span>':'<span style="color:var(--red)">⚠️ รอสัญญาณใหม่</span>'}`;
-document.getElementById(‘execSrc’).textContent=r.slSrc;
+  // Trade plan
+  const ts=document.getElementById('trSide');
+  if(r.side==='SELL'){ts.textContent='● SELL';ts.className='tr-s ts-sell';}
+  else if(r.side==='BUY'){ts.textContent='● BUY';ts.className='tr-s ts-buy';}
+  else{ts.textContent='◌ WAIT';ts.className='tr-s ts-wait';}
+  document.getElementById('tSL').textContent=r.sl.toFixed(0);
+  document.getElementById('tEN').textContent=r.entry.toFixed(0);
+  document.getElementById('tTP').textContent=r.tp1.toFixed(0);
+  document.getElementById('rrR').textContent=`1:${r.rr.toFixed(1)}`;
+  document.getElementById('rrT2').textContent=r.tp2.toFixed(0);
+  const v=r.rr>=m.rrMin;
+  document.getElementById('rrV').textContent=v?'VALID✓':'LOW✗';
+  document.getElementById('rrV').style.color=v?'var(--green)':'var(--red)';
+  document.getElementById('execNote').innerHTML=`SL: ${r.slSrc} · TF: 4H+1H<br>${(r.side==='SELL'?r.sl>r.entry:r.sl<r.entry)?'<span style="color:var(--green)">✓ SL ถูกทิศ</span>':'<span style="color:var(--red)">⚠️ รอสัญญาณใหม่</span>'}`;
+  document.getElementById('execSrc').textContent=r.slSrc;
 
-// Filters
-document.getElementById(‘fGrid’).innerHTML=`
-
+  // Filters
+  document.getElementById('fGrid').innerHTML=`
 <div class="fi"><div class="fil">DATA</div><div class="fiv ok">LIVE✓</div><div class="fin">Fetch#${S.fetchN}</div></div>
 <div class="fi"><div class="fil">OHLC</div><div class="fiv ${S.apiKey?'ok':'warn'}">${S.apiKey?'REAL':'SYNTH'}</div><div class="fin">${S.apiKey?'API Ninjas':'ไม่มี Key'}</div></div>
 <div class="fi"><div class="fil">SESSION</div><div class="fiv" style="color:${r.se.col}">${r.se.name}</div><div class="fin">${r.se.ok?'High Vol':'Low Vol'}</div></div>
 <div class="fi"><div class="fil">OB+FVG</div><div class="fiv ${(r.inBullOB||r.inBearOB||r.inFVG)?'ok':'bad'}">${(r.inBullOB||r.inBearOB||r.inFVG)?'IN ZONE':'NONE'}</div><div class="fin">${r.inBullOB?'Bull OB ':r.inBearOB?'Bear OB ':r.inFVG?'FVG ':''}ตรวจ 4H+1H</div></div>`;
 
-// Log
-const now2=new Date().toLocaleTimeString(‘en-GB’,{hour:‘2-digit’,minute:‘2-digit’,second:‘2-digit’});
-const logs=[
-`<span class="gr">LIVE</span> Gold=<span class="g">${r.g.toFixed(2)}</span> DXY=${r.hasDXY?`<span class="c">${r.d.toFixed(3)}</span>`:'<span style="color:var(--muted)">—</span>'} Score:<span class="g">${r.tot}/100</span> → <span class="${r.side==='SELL'?'r':r.side==='BUY'?'gr':'g'}">${r.side}</span>`,
-`HTF: <span class="${r.trend==='UPTREND'?'gr':'r'}">${r.trend}</span> · BOS:<span class="${r.bos?'gr':'muted'}">${r.bos?'✓':'✗'}</span> CHoCH:<span class="${r.choch?'gr':'muted'}">${r.choch?'✓':'✗'}</span> Liq:<span class="${r.liqSweep?'gr':'muted'}">${r.liqSweep?'✓':'✗'}</span>`,
-`OB: Bull<span class="${r.inBullOB?'gr':'muted'}">${r.inBullOB?'✓':'✗'}</span> Bear<span class="${r.inBearOB?'or':'muted'}">${r.inBearOB?'✓':'✗'}</span> · FVG:<span class="${r.inFVG?'or':'muted'}">${r.inFVG?'✓':'✗'}</span> · GZ:<span class="${r.inGolden?'gr':'muted'}">${r.inGolden?'✓':'✗'}</span>`,
-`R:R=<span class="g">1:${r.rr.toFixed(1)}</span> SL(${r.slSrc})=${r.sl.toFixed(0)} TP1=${r.tp1.toFixed(0)} TP2=${r.tp2.toFixed(0)}`,
-];
-document.getElementById(‘logW’).innerHTML=logs.map(l=>`<div class="le"><div class="let">${now2}</div><div class="lem">${l}</div></div>`).join(’’);
-document.getElementById(‘logC’).textContent=logs.length+’ entries’;
+  // Log
+  const now2=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const logs=[
+    `<span class="gr">LIVE</span> Gold=<span class="g">${r.g.toFixed(2)}</span> DXY=${r.hasDXY?`<span class="c">${r.d.toFixed(3)}</span>`:'<span style="color:var(--muted)">—</span>'} Score:<span class="g">${r.tot}/100</span> → <span class="${r.side==='SELL'?'r':r.side==='BUY'?'gr':'g'}">${r.side}</span>`,
+    `HTF: <span class="${r.trend==='UPTREND'?'gr':'r'}">${r.trend}</span> · BOS:<span class="${r.bos?'gr':'muted'}">${r.bos?'✓':'✗'}</span> CHoCH:<span class="${r.choch?'gr':'muted'}">${r.choch?'✓':'✗'}</span> Liq:<span class="${r.liqSweep?'gr':'muted'}">${r.liqSweep?'✓':'✗'}</span>`,
+    `OB: Bull<span class="${r.inBullOB?'gr':'muted'}">${r.inBullOB?'✓':'✗'}</span> Bear<span class="${r.inBearOB?'or':'muted'}">${r.inBearOB?'✓':'✗'}</span> · FVG:<span class="${r.inFVG?'or':'muted'}">${r.inFVG?'✓':'✗'}</span> · GZ:<span class="${r.inGolden?'gr':'muted'}">${r.inGolden?'✓':'✗'}</span>`,
+    `R:R=<span class="g">1:${r.rr.toFixed(1)}</span> SL(${r.slSrc})=${r.sl.toFixed(0)} TP1=${r.tp1.toFixed(0)} TP2=${r.tp2.toFixed(0)}`,
+  ];
+  document.getElementById('logW').innerHTML=logs.map(l=>`<div class="le"><div class="let">${now2}</div><div class="lem">${l}</div></div>`).join('');
+  document.getElementById('logC').textContent=logs.length+' entries';
 
-renderSMC(r);
+  renderSMC(r);
 }
 
 // ─── Render SMC Panel ──────────────────────────────────────
 function renderSMC(r){
-const smc=r?.smc||computeSMC();
-if(!smc)return;
-const tCol=t=>t===‘UPTREND’?‘var(–green)’:t===‘DOWNTREND’?‘var(–red)’:‘var(–gold)’;
-const tIco=t=>t===‘UPTREND’?‘▲’:t===‘DOWNTREND’?‘▼’:‘↔’;
+  const smc=r?.smc||computeSMC();
+  if(!smc)return;
+  const tCol=t=>t==='UPTREND'?'var(--green)':t==='DOWNTREND'?'var(--red)':'var(--gold)';
+  const tIco=t=>t==='UPTREND'?'▲':t==='DOWNTREND'?'▼':'↔';
 
-// SWING H/L
-document.getElementById(‘smcSwingContent’).innerHTML=`
-
+  // SWING H/L
+  document.getElementById('smcSwingContent').innerHTML=`
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
   <span style="font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace">HTF 4H · Pivot-9 · ${S.apiKey?'REAL OHLC':'Synthetic'}</span>
   <span style="font-size:12px;font-weight:700;font-family:'Orbitron',sans-serif;color:${tCol(smc.tHTF)}">${tIco(smc.tHTF)} ${smc.tHTF}</span>
@@ -1169,9 +1174,8 @@ ${smc.last5.length?smc.last5.map(s=>`
   </div>`).join('')}
 </div>`;
 
-// MULTI-TF
-document.getElementById(‘smcMtfContent’).innerHTML=`
-
+  // MULTI-TF
+  document.getElementById('smcMtfContent').innerHTML=`
 <div class="tf-grid">
   ${[{label:'4H HTF',sub:'แนวโน้มหลัก',t:smc.tHTF},{label:'1H MTF',sub:'Entry timing',t:smc.tMTF},
     {label:'15m LTF',sub:'Precision',t:smc.tLTF}].map(x=>`
@@ -1185,9 +1189,9 @@ document.getElementById(‘smcMtfContent’).innerHTML=`
   </div>
 </div>`;
 
-// CHoCH/BOS
-document.getElementById(‘smcChochContent’).innerHTML=` ${[{tf:'4H',c:smc.tf4H.choch,b:smc.tf4H.bos},{tf:'1H',c:smc.tf1H.choch,b:smc.tf1H.bos},{tf:'15m',c:smc.tf15m.choch,b:smc.tf15m.bos}].map(x=>`
-
+  // CHoCH/BOS
+  document.getElementById('smcChochContent').innerHTML=`
+${[{tf:'4H',c:smc.tf4H.choch,b:smc.tf4H.bos},{tf:'1H',c:smc.tf1H.choch,b:smc.tf1H.bos},{tf:'15m',c:smc.tf15m.choch,b:smc.tf15m.bos}].map(x=>`
 <div class="choch-row ${x.c.choch||x.b.bos?x.c.choch?(x.c.dir==='UP'?'true-up':'true-dn'):'true-up':''}">
   <span style="font-size:10px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--cyan);min-width:28px">${x.tf}</span>
   <div style="flex:1">
@@ -1199,9 +1203,9 @@ document.getElementById(‘smcChochContent’).innerHTML=` ${[{tf:'4H',c:smc.tf4
   📌 CHoCH = เริ่มเปลี่ยน trend · BOS = ยืนยัน · Primary: 1H → Trigger: 15m
 </div>`;
 
-// LIQUIDITY
-document.getElementById(‘smcLiqContent’).innerHTML=` ${[{tf:'4H',liq:smc.tf4H.liq},{tf:'1H',liq:smc.tf1H.liq},{tf:'15m',liq:smc.tf15m.liq}].map(x=>`
-
+  // LIQUIDITY
+  document.getElementById('smcLiqContent').innerHTML=`
+${[{tf:'4H',liq:smc.tf4H.liq},{tf:'1H',liq:smc.tf1H.liq},{tf:'15m',liq:smc.tf15m.liq}].map(x=>`
 <div class="liq-row ${x.liq.sweep?(x.liq.type==='Buy-side'?'sweep-buy':'sweep-sell'):''}">
   <div>
     <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:var(--cyan)">${x.tf}</span>
@@ -1213,10 +1217,9 @@ document.getElementById(‘smcLiqContent’).innerHTML=` ${[{tf:'4H',liq:smc.tf4
   🟢 Buy-side = ทะลุ Low แล้วกลับขึ้น · 🔴 Sell-side = ทะลุ High แล้วกลับลง
 </div>`;
 
-// OB + FVG
-const obs=smc.obs4H||[],fvgs=smc.fvgs4H||[];
-document.getElementById(‘smcObContent’).innerHTML=`
-
+  // OB + FVG
+  const obs=smc.obs4H||[],fvgs=smc.fvgs4H||[];
+  document.getElementById('smcObContent').innerHTML=`
 <div style="font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:8px">Order Block · Fair Value Gap · HTF 4H</div>
 ${obs.length?obs.map(o=>`
 <div class="ob-row ${o.type==='BULL'?'ob-bull':'ob-bear'}">
@@ -1240,11 +1243,10 @@ ${fvgs.length?fvgs.map(g=>`
   📌 FVG = ช่องว่าง 3 แท่ง — ตลาดมักกลับมาเติม
 </div>`;
 
-// FIB
-const fib=smc.fib;
-const price=S.gold||0;
-document.getElementById(‘smcFibContent’).innerHTML=fib?`
-
+  // FIB
+  const fib=smc.fib;
+  const price=S.gold||0;
+  document.getElementById('smcFibContent').innerHTML=fib?`
 <div style="display:flex;justify-content:space-between;margin-bottom:6px">
   <span style="font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace">4H HTF · ${S.apiKey?'OHLC จริง':'Synthetic'}</span>
   <span style="font-size:11px;font-weight:700;color:${tCol(fib.dir==='UP'?'UPTREND':'DOWNTREND')}">${fib.dir==='UP'?'▲ Low→High':'▼ High→Low'}</span>
@@ -1259,21 +1261,20 @@ document.getElementById(‘smcFibContent’).innerHTML=fib?`
   <div style="font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:2px">ราคา ${smc.inGolden?'<span style="color:var(--green)">✅ อยู่ใน Golden Zone</span>':'ยังไม่ถึง'}</div>
 </div>`:'<div class="rec-empty">ข้อมูลไม่พอ</div>';
 
-// FINAL
-const sc=r||compute();
-const checks=[
-[‘HTF 4H Trend’,smc.tHTF!==‘SIDEWAY’,smc.tHTF],
-[‘MTF Aligned’,smc.allow!==‘WAIT’,`${smc.tHTF}+${smc.tMTF}`],
-[‘Order Block’,sc?.inBullOB||sc?.inBearOB?true:false,sc?.inBullOB?‘Bull OB ✓’:sc?.inBearOB?‘Bear OB ✓’:‘ไม่อยู่ใน OB’],
-[‘Fair Value Gap’,smc.tf4H.inBullFVG||smc.tf4H.inBearFVG,smc.tf4H.inBullFVG?‘Bull FVG ✓’:smc.tf4H.inBearFVG?‘Bear FVG ✓’:‘ไม่มี FVG’],
-[‘CHoCH (1H)’,smc.choch.choch,smc.choch.desc],
-[‘BOS (1H)’,smc.bos.bos,smc.bos.desc],
-[‘Liquidity Sweep’,smc.liq.sweep,smc.liq.desc],
-[‘Golden Zone 4H’,smc.inGolden,smc.inGolden?‘ราคาอยู่ใน GZ’:‘ยังไม่ถึง’],
-];
-const sigCol=smc.signal===‘BUY’?‘var(–green)’:smc.signal===‘SELL’?‘var(–red)’:‘var(–gold)’;
-document.getElementById(‘smcFinalContent’).innerHTML=`
-
+  // FINAL
+  const sc=r||compute();
+  const checks=[
+    ['HTF 4H Trend',smc.tHTF!=='SIDEWAY',smc.tHTF],
+    ['MTF Aligned',smc.allow!=='WAIT',`${smc.tHTF}+${smc.tMTF}`],
+    ['Order Block',sc?.inBullOB||sc?.inBearOB?true:false,sc?.inBullOB?'Bull OB ✓':sc?.inBearOB?'Bear OB ✓':'ไม่อยู่ใน OB'],
+    ['Fair Value Gap',smc.tf4H.inBullFVG||smc.tf4H.inBearFVG,smc.tf4H.inBullFVG?'Bull FVG ✓':smc.tf4H.inBearFVG?'Bear FVG ✓':'ไม่มี FVG'],
+    ['CHoCH (1H)',smc.choch.choch,smc.choch.desc],
+    ['BOS (1H)',smc.bos.bos,smc.bos.desc],
+    ['Liquidity Sweep',smc.liq.sweep,smc.liq.desc],
+    ['Golden Zone 4H',smc.inGolden,smc.inGolden?'ราคาอยู่ใน GZ':'ยังไม่ถึง'],
+  ];
+  const sigCol=smc.signal==='BUY'?'var(--green)':smc.signal==='SELL'?'var(--red)':'var(--gold)';
+  document.getElementById('smcFinalContent').innerHTML=`
 <div style="text-align:center;padding:10px 0 8px">
   <div style="font-size:22px;font-weight:900;font-family:'Orbitron',sans-serif;color:${sigCol}">${smc.signal==='BUY'?'🟢 BUY':smc.signal==='SELL'?'🔴 SELL':'⏸ WAIT'}</div>
   <span style="font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--purple)">SMC Score: ${smc.conf}/100</span>
@@ -1290,133 +1291,132 @@ ${checks.map(([n,ok,v])=>`
 
 // ─── AUTO BACKTEST ─────────────────────────────────────────
 async function runBacktest(){
-if(!S.apiKey){showToast(‘⚠️ ต้องมี API Key ก่อน Backtest’);return;}
-const btn=document.getElementById(‘btRunBtn’);
-btn.disabled=true;btn.textContent=‘⏳ กำลัง fetch…’;
-const log=document.getElementById(‘btLog’);
-log.textContent=‘กำลังดึง OHLC 4H 500 แท่ง…’;
-try{
-// Fetch 500 4H candles
-await fetchOHLC(‘4H’,500);
-const candles=S.candles[‘4H’]||[];
-if(candles.length<50){log.textContent=‘❌ ข้อมูลไม่พอ (ต้องการ ≥ 50 แท่ง)’;btn.disabled=false;btn.textContent=‘▶ RUN BACKTEST’;return;}
-log.textContent=`✅ ได้ ${candles.length} แท่ง · กำลัง backtest...`;
-const m=MODES[S.mode];
-let total=0,wins=0,losses=0,rrSum=0;
-const logLines=[];
-// Walk-forward: start from candle 50, look forward for result
-const pivot=4;
-for(let i=50;i<candles.length-10;i++){
-const slice=candles.slice(0,i+1);
-const cur=slice[i];
-// Run SMC on slice
-const sw=detectSwings(slice,pivot);
-const lab=labelSwings(sw);
-const trend=detectTrend(lab);
-if(trend===‘SIDEWAY’)continue;
-const choch=detectCHoCH(lab,cur.c);
-const bos=detectBOS(lab,cur.c);
-const liq=detectLiqSweep(sw,cur.c,slice);
-const fib=calcFib(sw,trend);
-const obs=detectOrderBlocks(slice,lab);
-const fvgs=detectFVG(slice);
-const inGolden=fib?(cur.c>=fib.goldZone[0]&&cur.c<=fib.goldZone[1]):false;
-const inOB=obs.some(o=>(o.type===‘BULL’&&cur.c>=o.bot&&cur.c<=o.top)||(o.type===‘BEAR’&&cur.c>=o.bot&&cur.c<=o.top));
-const inFVG=fvgs.some(g=>(g.type===‘BULL’&&cur.c>=g.bot&&cur.c<=g.top)||(g.type===‘BEAR’&&cur.c>=g.bot&&cur.c<=g.top));
-// Simple score
-let sc=0;
-if(trend!==‘SIDEWAY’)sc+=30;
-if(choch.choch)sc+=20;
-if(bos.bos)sc+=15;
-if(liq.sweep)sc+=15;
-if(inGolden)sc+=10;
-if(inOB)sc+=10;
-if(sc<m.minScore)continue;
-// Determine side
-const side=trend===‘UPTREND’?‘BUY’:‘SELL’;
-// SL/TP
-const entry=cur.c,isSell=side===‘SELL’;
-const sl=isSell?entry*(1+m.slPct/100):entry*(1-m.slPct/100);
-const tp=isSell?entry*(1-m.tp1Pct/100):entry*(1+m.tp1Pct/100);
-const rr=Math.abs(entry-tp)/Math.abs(entry-sl);
-if(rr<m.rrMin)continue;
-// Check forward candles for outcome (up to 10 bars)
-let result=‘none’;
-const fwd=candles.slice(i+1,i+11);
-for(const fc of fwd){
-if(isSell&&fc.l<=tp){result=‘win’;break;}
-if(isSell&&fc.h>=sl){result=‘loss’;break;}
-if(!isSell&&fc.h>=tp){result=‘win’;break;}
-if(!isSell&&fc.l<=sl){result=‘loss’;break;}
-}
-if(result===‘none’)continue;
-total++;rrSum+=rr;
-if(result===‘win’)wins++;else losses++;
-logLines.push(`[${new Date(cur.t).toLocaleDateString('th-TH')}] ${side} @ ${entry.toFixed(0)} → SL:${sl.toFixed(0)} TP:${tp.toFixed(0)} R:R${rr.toFixed(1)} → ${result==='win'?'✅ WIN':'❌ LOSS'}`);
-if(total>=300)break; // cap
-}
-// Update UI
-const wr=total?Math.round(wins/total*100):0;
-const avgRR=total?(rrSum/total).toFixed(1):’–’;
-document.getElementById(‘btWrPct’).textContent=wr+’%’;
-document.getElementById(‘btWrPct’).style.color=wr>=60?‘var(–green)’:wr>=45?‘var(–gold)’:‘var(–red)’;
-document.getElementById(‘btWrFill’).style.width=wr+’%’;
-document.getElementById(‘btWrFill’).style.background=wr>=60?‘var(–green)’:wr>=45?‘var(–gold)’:‘var(–red)’;
-document.getElementById(‘btTotal’).textContent=total;
-document.getElementById(‘btWin’).textContent=wins;
-document.getElementById(‘btLoss’).textContent=losses;
-document.getElementById(‘btRR’).textContent=avgRR;
-log.innerHTML=logLines.slice(-30).join(’\n’)||‘ไม่มี signal ที่ผ่านเกณฑ์’;
-log.scrollTop=log.scrollHeight;
-showToast(`✅ Backtest: ${total} trades · Win Rate: ${wr}%`);
-document.getElementById(‘btSrc’).textContent=`4H · ${candles.length}แท่ง · ${total}trades`;
-}catch(e){log.textContent=’❌ Error: ’+e.message;}
-btn.disabled=false;btn.textContent=‘▶ RUN BACKTEST’;
+  if(!S.apiKey){showToast('⚠️ ต้องมี API Key ก่อน Backtest');return;}
+  const btn=document.getElementById('btRunBtn');
+  btn.disabled=true;btn.textContent='⏳ กำลัง fetch...';
+  const log=document.getElementById('btLog');
+  log.textContent='กำลังดึง OHLC 4H 500 แท่ง...';
+  try{
+    // Fetch 500 4H candles
+    await fetchOHLC('4H',500);
+    const candles=S.candles['4H']||[];
+    if(candles.length<50){log.textContent='❌ ข้อมูลไม่พอ (ต้องการ ≥ 50 แท่ง)';btn.disabled=false;btn.textContent='▶ RUN BACKTEST';return;}
+    log.textContent=`✅ ได้ ${candles.length} แท่ง · กำลัง backtest...`;
+    const m=MODES[S.mode];
+    let total=0,wins=0,losses=0,rrSum=0;
+    const logLines=[];
+    // Walk-forward: start from candle 50, look forward for result
+    const pivot=4;
+    for(let i=50;i<candles.length-10;i++){
+      const slice=candles.slice(0,i+1);
+      const cur=slice[i];
+      // Run SMC on slice
+      const sw=detectSwings(slice,pivot);
+      const lab=labelSwings(sw);
+      const trend=detectTrend(lab);
+      if(trend==='SIDEWAY')continue;
+      const choch=detectCHoCH(lab,cur.c);
+      const bos=detectBOS(lab,cur.c);
+      const liq=detectLiqSweep(sw,cur.c,slice);
+      const fib=calcFib(sw,trend);
+      const obs=detectOrderBlocks(slice,lab);
+      const fvgs=detectFVG(slice);
+      const inGolden=fib?(cur.c>=fib.goldZone[0]&&cur.c<=fib.goldZone[1]):false;
+      const inOB=obs.some(o=>(o.type==='BULL'&&cur.c>=o.bot&&cur.c<=o.top)||(o.type==='BEAR'&&cur.c>=o.bot&&cur.c<=o.top));
+      const inFVG=fvgs.some(g=>(g.type==='BULL'&&cur.c>=g.bot&&cur.c<=g.top)||(g.type==='BEAR'&&cur.c>=g.bot&&cur.c<=g.top));
+      // Simple score
+      let sc=0;
+      if(trend!=='SIDEWAY')sc+=30;
+      if(choch.choch)sc+=20;
+      if(bos.bos)sc+=15;
+      if(liq.sweep)sc+=15;
+      if(inGolden)sc+=10;
+      if(inOB)sc+=10;
+      if(sc<m.minScore)continue;
+      // Determine side
+      const side=trend==='UPTREND'?'BUY':'SELL';
+      // SL/TP
+      const entry=cur.c,isSell=side==='SELL';
+      const sl=isSell?entry*(1+m.slPct/100):entry*(1-m.slPct/100);
+      const tp=isSell?entry*(1-m.tp1Pct/100):entry*(1+m.tp1Pct/100);
+      const rr=Math.abs(entry-tp)/Math.abs(entry-sl);
+      if(rr<m.rrMin)continue;
+      // Check forward candles for outcome (up to 10 bars)
+      let result='none';
+      const fwd=candles.slice(i+1,i+11);
+      for(const fc of fwd){
+        if(isSell&&fc.l<=tp){result='win';break;}
+        if(isSell&&fc.h>=sl){result='loss';break;}
+        if(!isSell&&fc.h>=tp){result='win';break;}
+        if(!isSell&&fc.l<=sl){result='loss';break;}
+      }
+      if(result==='none')continue;
+      total++;rrSum+=rr;
+      if(result==='win')wins++;else losses++;
+      logLines.push(`[${new Date(cur.t).toLocaleDateString('th-TH')}] ${side} @ ${entry.toFixed(0)} → SL:${sl.toFixed(0)} TP:${tp.toFixed(0)} R:R${rr.toFixed(1)} → ${result==='win'?'✅ WIN':'❌ LOSS'}`);
+      if(total>=300)break; // cap
+    }
+    // Update UI
+    const wr=total?Math.round(wins/total*100):0;
+    const avgRR=total?(rrSum/total).toFixed(1):'--';
+    document.getElementById('btWrPct').textContent=wr+'%';
+    document.getElementById('btWrPct').style.color=wr>=60?'var(--green)':wr>=45?'var(--gold)':'var(--red)';
+    document.getElementById('btWrFill').style.width=wr+'%';
+    document.getElementById('btWrFill').style.background=wr>=60?'var(--green)':wr>=45?'var(--gold)':'var(--red)';
+    document.getElementById('btTotal').textContent=total;
+    document.getElementById('btWin').textContent=wins;
+    document.getElementById('btLoss').textContent=losses;
+    document.getElementById('btRR').textContent=avgRR;
+    log.innerHTML=logLines.slice(-30).join('\n')||'ไม่มี signal ที่ผ่านเกณฑ์';
+    log.scrollTop=log.scrollHeight;
+    showToast(`✅ Backtest: ${total} trades · Win Rate: ${wr}%`);
+    document.getElementById('btSrc').textContent=`4H · ${candles.length}แท่ง · ${total}trades`;
+  }catch(e){log.textContent='❌ Error: '+e.message;}
+  btn.disabled=false;btn.textContent='▶ RUN BACKTEST';
 }
 
 // ─── Win/Loss Tracker ──────────────────────────────────────
-const TRADE_LOG_KEY=‘s9_trades’;
-const GS_URL_KEY=‘s9_gsurl’;
+const TRADE_LOG_KEY='s9_trades';
+const GS_URL_KEY='s9_gsurl';
 let TRADES=[];
-function loadTrades(){try{TRADES=JSON.parse(localStorage.getItem(TRADE_LOG_KEY)||’[]’);}catch(e){TRADES=[];}renderTrades();}
+function loadTrades(){try{TRADES=JSON.parse(localStorage.getItem(TRADE_LOG_KEY)||'[]');}catch(e){TRADES=[];}renderTrades();}
 function saveTrades(){try{localStorage.setItem(TRADE_LOG_KEY,JSON.stringify(TRADES));}catch(e){}}
-function clearTrades(){if(!confirm(‘ล้าง Trade Log ทั้งหมด?’))return;TRADES=[];saveTrades();renderTrades();showToast(‘ล้างแล้ว’);}
+function clearTrades(){if(!confirm('ล้าง Trade Log ทั้งหมด?'))return;TRADES=[];saveTrades();renderTrades();showToast('ล้างแล้ว');}
 function addTrade(side,entry,sl,tp1,tp2,rr,score,reason,mode){
-const now=new Date();
-TRADES.unshift({id:Date.now(),side,entry,sl,tp1,tp2,rr,score,reason,mode,
-gold:S.gold,dxy:S.dxy,result:‘pending’,
-date:now.toLocaleDateString(‘th-TH’,{day:‘2-digit’,month:‘2-digit’,year:‘2-digit’}),
-time:now.toLocaleTimeString(‘th-TH’,{hour:‘2-digit’,minute:‘2-digit’,second:‘2-digit’,hour12:false}),
-iso:now.toISOString()});
-if(TRADES.length>100)TRADES.pop();
-saveTrades();renderTrades();
+  const now=new Date();
+  TRADES.unshift({id:Date.now(),side,entry,sl,tp1,tp2,rr,score,reason,mode,
+    gold:S.gold,dxy:S.dxy,result:'pending',
+    date:now.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'2-digit'}),
+    time:now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),
+    iso:now.toISOString()});
+  if(TRADES.length>100)TRADES.pop();
+  saveTrades();renderTrades();
 }
 function setResult(id,res){
-const t=TRADES.find(x=>x.id===id);if(!t)return;
-t.result=res;t.resultTime=new Date().toISOString();
-saveTrades();renderTrades();showToast(res===‘win’?‘✅ WIN’:‘❌ LOSS’);
-const url=localStorage.getItem(GS_URL_KEY);
-if(url)syncOne(t,url);
+  const t=TRADES.find(x=>x.id===id);if(!t)return;
+  t.result=res;t.resultTime=new Date().toISOString();
+  saveTrades();renderTrades();showToast(res==='win'?'✅ WIN':'❌ LOSS');
+  const url=localStorage.getItem(GS_URL_KEY);
+  if(url)syncOne(t,url);
 }
 function calcWR(){
-const s=TRADES.filter(t=>t.result===‘win’||t.result===‘loss’);
-const w=TRADES.filter(t=>t.result===‘win’).length;
-return{total:TRADES.length,wins:w,losses:TRADES.filter(t=>t.result===‘loss’).length,pend:TRADES.filter(t=>t.result===‘pending’).length,pct:s.length?Math.round(w/s.length*100):null};
+  const s=TRADES.filter(t=>t.result==='win'||t.result==='loss');
+  const w=TRADES.filter(t=>t.result==='win').length;
+  return{total:TRADES.length,wins:w,losses:TRADES.filter(t=>t.result==='loss').length,pend:TRADES.filter(t=>t.result==='pending').length,pct:s.length?Math.round(w/s.length*100):null};
 }
 function renderTrades(){
-const wr=calcWR();
-const pct=wr.pct,pctStr=pct!==null?pct+’%’:’–%’;
-const col=pct===null?‘var(–muted)’:pct>=60?‘var(–green)’:pct>=40?‘var(–gold)’:‘var(–red)’;
-document.getElementById(‘wrPct’).textContent=pctStr;document.getElementById(‘wrPct’).style.color=col;
-document.getElementById(‘wrFill’).style.width=(pct||0)+’%’;document.getElementById(‘wrFill’).style.background=col;
-document.getElementById(‘wrTotal’).textContent=wr.total;
-document.getElementById(‘wrWin’).textContent=wr.wins;
-document.getElementById(‘wrLoss’).textContent=wr.losses;
-document.getElementById(‘wrPend’).textContent=wr.pend;
-const list=document.getElementById(‘tradeList’);
-if(!TRADES.length){list.innerHTML=’<div class="rec-empty">ยังไม่มี Trade</div>’;return;}
-list.innerHTML=TRADES.slice(0,30).map(t=>`
-
+  const wr=calcWR();
+  const pct=wr.pct,pctStr=pct!==null?pct+'%':'--%';
+  const col=pct===null?'var(--muted)':pct>=60?'var(--green)':pct>=40?'var(--gold)':'var(--red)';
+  document.getElementById('wrPct').textContent=pctStr;document.getElementById('wrPct').style.color=col;
+  document.getElementById('wrFill').style.width=(pct||0)+'%';document.getElementById('wrFill').style.background=col;
+  document.getElementById('wrTotal').textContent=wr.total;
+  document.getElementById('wrWin').textContent=wr.wins;
+  document.getElementById('wrLoss').textContent=wr.losses;
+  document.getElementById('wrPend').textContent=wr.pend;
+  const list=document.getElementById('tradeList');
+  if(!TRADES.length){list.innerHTML='<div class="rec-empty">ยังไม่มี Trade</div>';return;}
+  list.innerHTML=TRADES.slice(0,30).map(t=>`
 <div class="tl-item ${t.result}">
   <div class="tl-sig">${t.side==='SELL'?'🔴':t.side==='BUY'?'🟢':'⚡'}<br>${t.side}</div>
   <div class="tl-info">
@@ -1434,81 +1434,80 @@ function saveGsUrl(){const url=document.getElementById('gsUrl').value.trim();if(
 function loadGsUrl(){try{const u=localStorage.getItem(GS_URL_KEY)||'';if(u)document.getElementById('gsUrl').value=u;}catch(e){}}
 
 async function testGoogleSheet(){
-const url=document.getElementById(‘gsUrl’).value.trim()||localStorage.getItem(GS_URL_KEY);
-if(!url){showToast(‘⚠️ กรุณากรอก Google Sheets URL ก่อน’);return;}
-const btn=document.getElementById(‘testGsBtn’);
-btn.textContent=‘⏳ Testing…’;btn.style.opacity=‘0.6’;btn.disabled=true;
-try{
-// Send a test record
-const now=new Date();
-const p=new URLSearchParams({
-date:now.toLocaleDateString(‘th-TH’,{day:‘2-digit’,month:‘2-digit’,year:‘2-digit’}),
-time:now.toLocaleTimeString(‘th-TH’,{hour:‘2-digit’,minute:‘2-digit’,second:‘2-digit’,hour12:false}),
-iso:now.toISOString(),
-side:‘TEST’,entry:‘3300.00’,sl:‘3310.00’,tp1:‘3275.00’,tp2:‘3250.00’,
-rr:‘2.0’,score:‘75’,mode:‘TEST’,gold:String(S.gold||0),dxy:String(S.dxy||0),
-result:‘test’,reason:‘Test from Sentinel v9 — ทดสอบการเชื่อมต่อ’,resultTime:now.toISOString(),
-});
-const res=await fetch(`${url}?${p.toString()}`,{method:‘GET’});
-if(res.ok){
-const txt=await res.text().catch(()=>‘ok’);
-showToast(‘✅ Google Sheets ตอบกลับ: ‘+(txt.substring(0,30)||‘OK’));
-btn.textContent=‘✅ OK’;btn.style.background=‘rgba(0,255,170,.2)’;
-document.getElementById(‘gsLbl’).textContent=‘CONNECTED’;
-}else{
-showToast(‘❌ Sheets ตอบ HTTP ‘+res.status);
-btn.textContent=‘❌ HTTP ‘+res.status;btn.style.background=‘rgba(255,51,85,.15)’;
-}
-}catch(e){
-// CORS error is common but means request went through (GAS doesn’t set CORS on GET)
-if(e.name===‘TypeError’||e.message.includes(‘fetch’)){
-showToast(‘⚡ ส่งแล้ว — ตรวจใน Sheet ได้เลย (CORS หลีกได้ปกติ)’);
-btn.textContent=‘⚡ SENT’;btn.style.background=‘rgba(255,149,0,.15)’;
-document.getElementById(‘gsLbl’).textContent=‘SENT’;
-}else{
-showToast(‘❌ Error: ‘+e.message.substring(0,30));
-btn.textContent=‘❌ FAIL’;btn.style.background=‘rgba(255,51,85,.15)’;
-}
-}
-setTimeout(()=>{btn.textContent=‘🔬 TEST’;btn.style.opacity=‘1’;btn.style.background=’’;btn.disabled=false;},3000);
+  const url=document.getElementById('gsUrl').value.trim()||localStorage.getItem(GS_URL_KEY);
+  if(!url){showToast('⚠️ กรุณากรอก Google Sheets URL ก่อน');return;}
+  const btn=document.getElementById('testGsBtn');
+  btn.textContent='⏳ Testing...';btn.style.opacity='0.6';btn.disabled=true;
+  try{
+    // Send a test record
+    const now=new Date();
+    const p=new URLSearchParams({
+      date:now.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'2-digit'}),
+      time:now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),
+      iso:now.toISOString(),
+      side:'TEST',entry:'3300.00',sl:'3310.00',tp1:'3275.00',tp2:'3250.00',
+      rr:'2.0',score:'75',mode:'TEST',gold:String(S.gold||0),dxy:String(S.dxy||0),
+      result:'test',reason:'Test from Sentinel v9 — ทดสอบการเชื่อมต่อ',resultTime:now.toISOString(),
+    });
+    const res=await fetch(`${url}?${p.toString()}`,{method:'GET'});
+    if(res.ok){
+      const txt=await res.text().catch(()=>'ok');
+      showToast('✅ Google Sheets ตอบกลับ: '+(txt.substring(0,30)||'OK'));
+      btn.textContent='✅ OK';btn.style.background='rgba(0,255,170,.2)';
+      document.getElementById('gsLbl').textContent='CONNECTED';
+    }else{
+      showToast('❌ Sheets ตอบ HTTP '+res.status);
+      btn.textContent='❌ HTTP '+res.status;btn.style.background='rgba(255,51,85,.15)';
+    }
+  }catch(e){
+    // CORS error is common but means request went through (GAS doesn't set CORS on GET)
+    if(e.name==='TypeError'||e.message.includes('fetch')){
+      showToast('⚡ ส่งแล้ว — ตรวจใน Sheet ได้เลย (CORS หลีกได้ปกติ)');
+      btn.textContent='⚡ SENT';btn.style.background='rgba(255,149,0,.15)';
+      document.getElementById('gsLbl').textContent='SENT';
+    }else{
+      showToast('❌ Error: '+e.message.substring(0,30));
+      btn.textContent='❌ FAIL';btn.style.background='rgba(255,51,85,.15)';
+    }
+  }
+  setTimeout(()=>{btn.textContent='🔬 TEST';btn.style.opacity='1';btn.style.background='';btn.disabled=false;},3000);
 }
 async function syncOne(t,url){
-try{
-const p=new URLSearchParams({date:t.date,time:t.time,iso:t.iso||’’,side:t.side,entry:t.entry,sl:t.sl,tp1:t.tp1,tp2:t.tp2,rr:t.rr,score:t.score,mode:t.mode,gold:t.gold,dxy:t.dxy||’’,result:t.result,reason:(t.reason||’’).substring(0,200),resultTime:t.resultTime||’’});
-await fetch(`${url}?${p.toString()}`);t.synced=true;saveTrades();
-}catch(e){console.warn(‘sync fail’,e);}
+  try{
+    const p=new URLSearchParams({date:t.date,time:t.time,iso:t.iso||'',side:t.side,entry:t.entry,sl:t.sl,tp1:t.tp1,tp2:t.tp2,rr:t.rr,score:t.score,mode:t.mode,gold:t.gold,dxy:t.dxy||'',result:t.result,reason:(t.reason||'').substring(0,200),resultTime:t.resultTime||''});
+    await fetch(`${url}?${p.toString()}`);t.synced=true;saveTrades();
+  }catch(e){console.warn('sync fail',e);}
 }
 async function syncSheets(){
-const url=localStorage.getItem(GS_URL_KEY);
-if(!url){showToast(‘⚠️ ยังไม่ได้ตั้ง Google Sheets URL’);return;}
-const btn=document.getElementById(‘syncTxt’);btn.textContent=‘⏳ Syncing…’;
-const unsync=TRADES.filter(t=>!t.synced);
-let ok=0;
-for(const t of unsync){await syncOne(t,url);if(t.synced)ok++;}
-renderTrades();btn.textContent=‘Sync → Google Sheets’;
-showToast(`Sync: ${ok}/${unsync.length} ✓`);
-document.getElementById(‘gsLbl’).textContent=`SYNCED ${ok}`;
+  const url=localStorage.getItem(GS_URL_KEY);
+  if(!url){showToast('⚠️ ยังไม่ได้ตั้ง Google Sheets URL');return;}
+  const btn=document.getElementById('syncTxt');btn.textContent='⏳ Syncing...';
+  const unsync=TRADES.filter(t=>!t.synced);
+  let ok=0;
+  for(const t of unsync){await syncOne(t,url);if(t.synced)ok++;}
+  renderTrades();btn.textContent='Sync → Google Sheets';
+  showToast(`Sync: ${ok}/${unsync.length} ✓`);
+  document.getElementById('gsLbl').textContent=`SYNCED ${ok}`;
 }
 
 // ─── Alert Records ──────────────────────────────────────────
 const ALERTS=[];
 const MAX_ALERTS=50;
 function recordAlert(side,score,entry,sl,tp1,tp2,rr,reason){
-const now=new Date();
-ALERTS.unshift({id:Date.now(),side,score,entry:entry.toFixed(2),sl:sl.toFixed(2),tp1:tp1.toFixed(2),tp2:tp2.toFixed(2),rr:rr.toFixed(2),reason,
-time:now.toLocaleTimeString(‘th-TH’,{hour:‘2-digit’,minute:‘2-digit’,second:‘2-digit’,hour12:false}),
-date:now.toLocaleDateString(‘th-TH’,{day:‘2-digit’,month:‘2-digit’,year:‘2-digit’}),
-gold:(S.gold||0).toFixed(2),mode:S.mode.toUpperCase()});
-if(ALERTS.length>MAX_ALERTS)ALERTS.pop();
-renderAlerts();
+  const now=new Date();
+  ALERTS.unshift({id:Date.now(),side,score,entry:entry.toFixed(2),sl:sl.toFixed(2),tp1:tp1.toFixed(2),tp2:tp2.toFixed(2),rr:rr.toFixed(2),reason,
+    time:now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),
+    date:now.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'2-digit'}),
+    gold:(S.gold||0).toFixed(2),mode:S.mode.toUpperCase()});
+  if(ALERTS.length>MAX_ALERTS)ALERTS.pop();
+  renderAlerts();
 }
 function clearAlerts(){ALERTS.length=0;renderAlerts();}
 function renderAlerts(){
-document.getElementById(‘recCnt’).textContent=ALERTS.length+’ รายการ’;
-const list=document.getElementById(‘recList’);
-if(!ALERTS.length){list.innerHTML=’<div class="rec-empty">ยังไม่มีการแจ้งเตือน · เปิด ALARM แล้วรอสัญญาณ</div>’;return;}
-list.innerHTML=ALERTS.map(a=>`
-
+  document.getElementById('recCnt').textContent=ALERTS.length+' รายการ';
+  const list=document.getElementById('recList');
+  if(!ALERTS.length){list.innerHTML='<div class="rec-empty">ยังไม่มีการแจ้งเตือน · เปิด ALARM แล้วรอสัญญาณ</div>';return;}
+  list.innerHTML=ALERTS.map(a=>`
 <div class="rec-item rec-${a.side.toLowerCase()}">
   <div class="rec-top">
     <span class="rec-sig">${a.side==='SELL'?'🔴':'🟢'} ${a.side}</span>
@@ -1529,139 +1528,138 @@ list.innerHTML=ALERTS.map(a=>`
 // ─── Alarm ────────────────────────────────────────────────
 let _lastAlarmSig=null,_lastAlarmTime=0;
 function alarm(){
-const r=compute();if(!r)return;
-if(!S.audioCtx)try{S.audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
-if(S.audioCtx){
-if(navigator.vibrate)navigator.vibrate([200,80,200,80,400]);
-[660,880,1100].forEach((f,i)=>{
-const o=S.audioCtx.createOscillator(),g=S.audioCtx.createGain();
-o.connect(g);g.connect(S.audioCtx.destination);o.frequency.value=f;o.type=‘sine’;
-g.gain.setValueAtTime(0.25,S.audioCtx.currentTime+i*.13);
-g.gain.exponentialRampToValueAtTime(0.001,S.audioCtx.currentTime+i*.13+.11);
-o.start(S.audioCtx.currentTime+i*.13);o.stop(S.audioCtx.currentTime+i*.13+.11);
-});
-}
-const now=Date.now();
-if(now-_lastAlarmTime<60000&&_lastAlarmSig===r.side)return;
-_lastAlarmSig=r.side;_lastAlarmTime=now;
-const smc=computeSMC();
-const smcScore=smc?smc.conf:0;
-const combined=Math.round((r.tot+smcScore)/2);
-const reason=[`Mode:${MODES[S.mode].label}`,`Score:${r.tot}`,`SMC:${smcScore}`,`Trend:${r.trend}`,
-`BOS:${r.bos?'✓':'✗'}`,`CHoCH:${r.choch?'✓':'✗'}`,`OB:${(r.inBullOB||r.inBearOB)?'✓':'✗'}`,
-`Liq:${r.liqSweep?'✓':'✗'}`,`GZ:${r.inGolden?'✓':'✗'}`,`Sess:${r.se.name}`].join(’ · ’);
-recordAlert(r.side,combined,r.entry,r.sl,r.tp1,r.tp2,r.rr,reason);
-addTrade(r.side,r.entry,r.sl,r.tp1,r.tp2,r.rr,combined,reason,MODES[S.mode].label);
+  const r=compute();if(!r)return;
+  if(!S.audioCtx)try{S.audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
+  if(S.audioCtx){
+    if(navigator.vibrate)navigator.vibrate([200,80,200,80,400]);
+    [660,880,1100].forEach((f,i)=>{
+      const o=S.audioCtx.createOscillator(),g=S.audioCtx.createGain();
+      o.connect(g);g.connect(S.audioCtx.destination);o.frequency.value=f;o.type='sine';
+      g.gain.setValueAtTime(0.25,S.audioCtx.currentTime+i*.13);
+      g.gain.exponentialRampToValueAtTime(0.001,S.audioCtx.currentTime+i*.13+.11);
+      o.start(S.audioCtx.currentTime+i*.13);o.stop(S.audioCtx.currentTime+i*.13+.11);
+    });
+  }
+  const now=Date.now();
+  if(now-_lastAlarmTime<60000&&_lastAlarmSig===r.side)return;
+  _lastAlarmSig=r.side;_lastAlarmTime=now;
+  const smc=computeSMC();
+  const smcScore=smc?smc.conf:0;
+  const combined=Math.round((r.tot+smcScore)/2);
+  const reason=[`Mode:${MODES[S.mode].label}`,`Score:${r.tot}`,`SMC:${smcScore}`,`Trend:${r.trend}`,
+    `BOS:${r.bos?'✓':'✗'}`,`CHoCH:${r.choch?'✓':'✗'}`,`OB:${(r.inBullOB||r.inBearOB)?'✓':'✗'}`,
+    `Liq:${r.liqSweep?'✓':'✗'}`,`GZ:${r.inGolden?'✓':'✗'}`,`Sess:${r.se.name}`].join(' · ');
+  recordAlert(r.side,combined,r.entry,r.sl,r.tp1,r.tp2,r.rr,reason);
+  addTrade(r.side,r.entry,r.sl,r.tp1,r.tp2,r.rr,combined,reason,MODES[S.mode].label);
 }
 function toggleAlarm(){
-S.alarmOn=!S.alarmOn;
-document.getElementById(‘aIco’).textContent=S.alarmOn?‘🔕’:‘🔔’;
-document.getElementById(‘aTxt’).textContent=S.alarmOn?‘ARMED’:‘ALARM OFF’;
-document.getElementById(‘aBtn’).classList.toggle(‘armed’,S.alarmOn);
-showToast(S.alarmOn?‘🔔 Armed’:‘Off’);
+  S.alarmOn=!S.alarmOn;
+  document.getElementById('aIco').textContent=S.alarmOn?'🔕':'🔔';
+  document.getElementById('aTxt').textContent=S.alarmOn?'ARMED':'ALARM OFF';
+  document.getElementById('aBtn').classList.toggle('armed',S.alarmOn);
+  showToast(S.alarmOn?'🔔 Armed':'Off');
 }
 
 // ─── UI Helpers ────────────────────────────────────────────
 function setStat(st,msg){
-document.getElementById(‘sDot’).className=‘sd ‘+(st===‘ok’?‘ok’:st===‘ld’?‘ld’:‘er’);
-document.getElementById(‘sVal’).textContent=msg;
-document.getElementById(‘sRight’).textContent=st===‘ok’?`Fetch#${S.fetchN}·${S.apiKey?'REAL':'SYN'}`:’–’;
+  document.getElementById('sDot').className='sd '+(st==='ok'?'ok':st==='ld'?'ld':'er');
+  document.getElementById('sVal').textContent=msg;
+  document.getElementById('sRight').textContent=st==='ok'?`Fetch#${S.fetchN}·${S.apiKey?'REAL':'SYN'}`:'--';
 }
 function setPill(cls,txt){
-document.getElementById(‘pill’).className=‘pill ‘+cls;
-document.getElementById(‘pTxt’).textContent=txt;
+  document.getElementById('pill').className='pill '+cls;
+  document.getElementById('pTxt').textContent=txt;
 }
-function showNotice(msg){document.getElementById(‘notice’).classList.remove(‘hide’);document.getElementById(‘noticeText’).innerHTML=’<b>⚠️ Error</b> — ‘+msg;}
-function hideNotice(){document.getElementById(‘notice’).classList.add(‘hide’);}
+function showNotice(msg){document.getElementById('notice').classList.remove('hide');document.getElementById('noticeText').innerHTML='<b>⚠️ Error</b> — '+msg;}
+function hideNotice(){document.getElementById('notice').classList.add('hide');}
 let cdT;
-function startCD(s){clearInterval(cdT);let c=s;cdT=setInterval(()=>{c–;document.getElementById(‘sRight’).textContent=`รีเฟรชใน ${c}วิ`;if(c<=0)clearInterval(cdT);},1000);}
+function startCD(s){clearInterval(cdT);let c=s;cdT=setInterval(()=>{c--;document.getElementById('sRight').textContent=`รีเฟรชใน ${c}วิ`;if(c<=0)clearInterval(cdT);},1000);}
 function spk(id,data,col){
-const cv=document.getElementById(id);if(!cv||!data||data.length<2)return;
-const ctx=cv.getContext(‘2d’),W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
-const mn=Math.min(…data),mx=Math.max(…data),rng=mx-mn||1;
-const pts=data.map((v,i)=>[i/(data.length-1)*W,H-((v-mn)/rng)*(H-3)-1.5]);
-ctx.beginPath();pts.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));
-ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.stroke();
+  const cv=document.getElementById(id);if(!cv||!data||data.length<2)return;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
+  const mn=Math.min(...data),mx=Math.max(...data),rng=mx-mn||1;
+  const pts=data.map((v,i)=>[i/(data.length-1)*W,H-((v-mn)/rng)*(H-3)-1.5]);
+  ctx.beginPath();pts.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));
+  ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.stroke();
 }
 function animN(id,target,dur){
-const el=document.getElementById(id);
-const s=parseInt(el.textContent)||0,t0=performance.now();
-const step=n=>{const p=Math.min((n-t0)/dur,1),e=1-Math.pow(1-p,3);el.textContent=Math.round(s+(target-s)*e);if(p<1)requestAnimationFrame(step);};
-requestAnimationFrame(step);
+  const el=document.getElementById(id);
+  const s=parseInt(el.textContent)||0,t0=performance.now();
+  const step=n=>{const p=Math.min((n-t0)/dur,1),e=1-Math.pow(1-p,3);el.textContent=Math.round(s+(target-s)*e);if(p<1)requestAnimationFrame(step);};
+  requestAnimationFrame(step);
 }
 function showToast(msg){
-const t=document.getElementById(‘toast’);t.textContent=msg;t.classList.add(‘show’);
-setTimeout(()=>t.classList.remove(‘show’),2500);
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
 }
 function setMode(m){
-S.mode=m;S.smcCache=null;
-[‘scalp’,‘swing’,‘position’].forEach(x=>{
-const b=document.getElementById(‘bm-’+x);
-b.className=‘mb’+(x===m?’ ‘+{‘scalp’:‘ms’,‘swing’:‘mw’,‘position’:‘mp’}[x]:’’);
-});
-render();showToast(‘Mode: ‘+MODES[m].label);
+  S.mode=m;S.smcCache=null;
+  ['scalp','swing','position'].forEach(x=>{
+    const b=document.getElementById('bm-'+x);
+    b.className='mb'+(x===m?' '+{'scalp':'ms','swing':'mw','position':'mp'}[x]:'');
+  });
+  render();showToast('Mode: '+MODES[m].label);
 }
 function showTab(t){
-[‘c’,‘d’,‘f’].forEach(x=>{document.getElementById(‘t’+x).classList.toggle(‘show’,x===t);});
-document.querySelectorAll(’.lt’).forEach((b,i)=>b.classList.toggle(‘on’,[‘c’,‘d’,‘f’][i]===t));
+  ['c','d','f'].forEach(x=>{document.getElementById('t'+x).classList.toggle('show',x===t);});
+  document.querySelectorAll('.lt').forEach((b,i)=>b.classList.toggle('on',['c','d','f'][i]===t));
 }
 function smcTab(t){
-[‘swing’,‘mtf’,‘choch’,‘liq’,‘ob’,‘fib’,‘final’].forEach(k=>document.getElementById(‘smc-’+k).classList.toggle(‘show’,k===t));
-document.querySelectorAll(’.smc-tab’).forEach((b,i)=>b.classList.toggle(‘on’,[‘swing’,‘mtf’,‘choch’,‘liq’,‘ob’,‘fib’,‘final’][i]===t));
+  ['swing','mtf','choch','liq','ob','fib','final'].forEach(k=>document.getElementById('smc-'+k).classList.toggle('show',k===t));
+  document.querySelectorAll('.smc-tab').forEach((b,i)=>b.classList.toggle('on',['swing','mtf','choch','liq','ob','fib','final'][i]===t));
 }
 
 // ─── TradingView ───────────────────────────────────────────
-let TV_TF=‘240’,curTV=‘gold’;
+let TV_TF='240',curTV='gold';
 function createTV(containerId,symbol,tf){
-const c=document.getElementById(containerId);if(!c)return;c.innerHTML=’’;
-const sc=document.createElement(‘script’);sc.src=‘https://s3.tradingview.com/tv.js’;sc.async=true;
-sc.onload=()=>new TradingView.widget({container_id:containerId,symbol,interval:tf,timezone:‘Asia/Bangkok’,theme:‘dark’,style:‘1’,locale:‘th’,toolbar_bg:’#0d1a2e’,enable_publishing:false,hide_top_toolbar:false,save_image:false,height:340,width:‘100%’,studies:[‘Volume@tv-basicstudies’],backgroundColor:’#08111f’,gridColor:‘rgba(0,229,255,.04)’,hide_side_toolbar:true,allow_symbol_change:true,withdateranges:false,details:false});
-if(window.TradingView)sc.onload();else document.head.appendChild(sc);
+  const c=document.getElementById(containerId);if(!c)return;c.innerHTML='';
+  const sc=document.createElement('script');sc.src='https://s3.tradingview.com/tv.js';sc.async=true;
+  sc.onload=()=>new TradingView.widget({container_id:containerId,symbol,interval:tf,timezone:'Asia/Bangkok',theme:'dark',style:'1',locale:'th',toolbar_bg:'#0d1a2e',enable_publishing:false,hide_top_toolbar:false,save_image:false,height:340,width:'100%',studies:['Volume@tv-basicstudies'],backgroundColor:'#08111f',gridColor:'rgba(0,229,255,.04)',hide_side_toolbar:true,allow_symbol_change:true,withdateranges:false,details:false});
+  if(window.TradingView)sc.onload();else document.head.appendChild(sc);
 }
 function switchTV(c,btn){
-curTV=c;document.querySelectorAll(’.tv-tab’).forEach(b=>b.classList.remove(‘active’));if(btn)btn.classList.add(‘active’);
-document.getElementById(‘tv-gold’).style.display=c===‘gold’?’’:‘none’;
-document.getElementById(‘tv-dxy’).style.display=c===‘dxy’?’’:‘none’;
-if(c===‘gold’)createTV(‘tvGoldW’,‘OANDA:XAUUSD’,TV_TF);
-else createTV(‘tvDxyW’,‘FX_IDC:USDX’,TV_TF);
+  curTV=c;document.querySelectorAll('.tv-tab').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');
+  document.getElementById('tv-gold').style.display=c==='gold'?'':'none';
+  document.getElementById('tv-dxy').style.display=c==='dxy'?'':'none';
+  if(c==='gold')createTV('tvGoldW','OANDA:XAUUSD',TV_TF);
+  else createTV('tvDxyW','FX_IDC:USDX',TV_TF);
 }
 function setTVTF(tf,btn){
-TV_TF=tf;document.querySelectorAll(’.tfb’).forEach(b=>b.classList.remove(‘on’));if(btn)btn.classList.add(‘on’);
-if(curTV===‘gold’)createTV(‘tvGoldW’,‘OANDA:XAUUSD’,tf);
-else createTV(‘tvDxyW’,‘FX_IDC:USDX’,tf);
-const map={‘5’:‘5m’,‘15’:‘15m’,‘30’:‘30m’,‘60’:‘1H’,‘240’:‘4H’};
-S.tf=map[tf]||‘4H’;
+  TV_TF=tf;document.querySelectorAll('.tfb').forEach(b=>b.classList.remove('on'));if(btn)btn.classList.add('on');
+  if(curTV==='gold')createTV('tvGoldW','OANDA:XAUUSD',tf);
+  else createTV('tvDxyW','FX_IDC:USDX',tf);
+  const map={'5':'5m','15':'15m','30':'30m','60':'1H','240':'4H'};
+  S.tf=map[tf]||'4H';
 }
 
 // ─── DXY Manual ───────────────────────────────────────────
-function onDXYInput(){const v=parseFloat(document.getElementById(‘dxyInp’).value);if(!isNaN(v)&&v>50&&v<200){document.getElementById(‘dxyStatus’).textContent=‘กด SET’;document.getElementById(‘dxyStatus’).style.color=‘var(–gold)’;}}
-function applyDXY(){const v=parseFloat(document.getElementById(‘dxyInp’).value);if(isNaN(v)||v<50||v>200){showToast(‘⚠️ DXY ไม่ถูกต้อง’);return;}S.dxyManual=parseFloat(v.toFixed(3));document.getElementById(‘dxyStatus’).textContent=’Manual: ’+S.dxyManual.toFixed(3);document.getElementById(‘dxyStatus’).style.color=‘var(–cyan)’;S.dxy=S.dxyManual;render();showToast(‘DXY = ‘+S.dxyManual.toFixed(3));}
-function clearDXY(){S.dxyManual=null;document.getElementById(‘dxyInp’).value=’’;document.getElementById(‘dxyStatus’).textContent=‘อัตโนมัติ’;document.getElementById(‘dxyStatus’).style.color=‘var(–muted)’;showToast(‘DXY: Auto’);fetchAll().finally(scheduleRefresh);}
+function onDXYInput(){const v=parseFloat(document.getElementById('dxyInp').value);if(!isNaN(v)&&v>50&&v<200){document.getElementById('dxyStatus').textContent='กด SET';document.getElementById('dxyStatus').style.color='var(--gold)';}}
+function applyDXY(){const v=parseFloat(document.getElementById('dxyInp').value);if(isNaN(v)||v<50||v>200){showToast('⚠️ DXY ไม่ถูกต้อง');return;}S.dxyManual=parseFloat(v.toFixed(3));document.getElementById('dxyStatus').textContent='Manual: '+S.dxyManual.toFixed(3);document.getElementById('dxyStatus').style.color='var(--cyan)';S.dxy=S.dxyManual;render();showToast('DXY = '+S.dxyManual.toFixed(3));}
+function clearDXY(){S.dxyManual=null;document.getElementById('dxyInp').value='';document.getElementById('dxyStatus').textContent='อัตโนมัติ';document.getElementById('dxyStatus').style.color='var(--muted)';showToast('DXY: Auto');fetchAll().finally(scheduleRefresh);}
 
 // ─── Refresh ──────────────────────────────────────────────
 function scheduleRefresh(){clearTimeout(S.refreshT);S.refreshT=setTimeout(()=>fetchAll().finally(scheduleRefresh),30000);}
-function manualRefresh(){const b=document.getElementById(‘rBtn’);b.style.transition=‘transform .5s’;b.style.transform=‘rotate(360deg)’;b.disabled=true;setTimeout(()=>{b.style.transform=’’;},500);fetchAll().finally(()=>{b.disabled=false;showToast(‘✓ Updated’)});}
+function manualRefresh(){const b=document.getElementById('rBtn');b.style.transition='transform .5s';b.style.transform='rotate(360deg)';b.disabled=true;setTimeout(()=>{b.style.transform='';},500);fetchAll().finally(()=>{b.disabled=false;showToast('✓ Updated')});}
 
 // ─── Init ─────────────────────────────────────────────────
-window.addEventListener(‘load’,async()=>{
-loadApiKey(); loadTrades(); loadGsUrl();
-await fetchAll();
-createTV(‘tvGoldW’,‘OANDA:XAUUSD’,TV_TF);
-scheduleRefresh();
-// Auto-test API key and fetch OHLC
-if(S.apiKey){
-setTimeout(async()=>{
-const ok=await testApiKey();
-if(!ok){
-// Key test failed — use synthetic but don’t block
-document.getElementById(‘smcSrc’).textContent=‘SYNTHETIC (API ไม่สำเร็จ)’;
-S.smcCache=null; render();
-}
-}, 1500);
-}
+window.addEventListener('load',async()=>{
+  loadApiKey(); loadTrades(); loadGsUrl();
+  await fetchAll();
+  createTV('tvGoldW','OANDA:XAUUSD',TV_TF);
+  scheduleRefresh();
+  // Auto-test API key and fetch OHLC
+  if(S.apiKey){
+    setTimeout(async()=>{
+      const ok=await testApiKey();
+      if(!ok){
+        // Key test failed — use synthetic but don't block
+        document.getElementById('smcSrc').textContent='SYNTHETIC (API ไม่สำเร็จ)';
+        S.smcCache=null; render();
+      }
+    }, 1500);
+  }
 });
-window.addEventListener(‘resize’,()=>render());
+window.addEventListener('resize',()=>render());
 </script>
-
 </body>
 </html>
